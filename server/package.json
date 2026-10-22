@@ -1,0 +1,46 @@
+{
+  "name": "clinical-sanctuary-server",
+  "version": "1.0.0",
+  "description": "Backend API Server for Clinical Sanctuary Emergency Alert System",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/utils/seed.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/ --runInBand --detectOpenHandles --forceExit"
+  },
+  "keywords": [
+    "emergency-alert",
+    "clinical-sanctuary",
+    "healthcare",
+    "sos"
+  ],
+  "author": "Aditya Chourasiya & Anurag Singh Yadav",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "google-auth-library": "^9.15.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.2",
+    "multer": "^1.4.5-lts.1",
+    "twilio": "^5.4.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 10000,
+    "transform": {}
+  }
+}

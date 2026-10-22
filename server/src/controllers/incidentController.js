@@ -1,0 +1,389 @@
+import EmergencyIncident from '../models/EmergencyIncident.js';
+import LocationUpdate from '../models/LocationUpdate.js';
+import EmergencyContact from '../models/EmergencyContact.js';
+import MedicalProfile from '../models/MedicalProfile.js';
+import NotificationLog from '../models/NotificationLog.js';
+import User from '../models/User.js';
+import { generateIncidentCode } from '../utils/idGenerator.js';
+import { sendEmergencySMS } from '../services/notificationService.js';
+
+/**
+ * Trigger SOS Emergency Alert
+ */
+export const triggerSOS = async (req, res) => {
+  try {
+    const { category, triggerType, latitude, longitude, accuracy, address } = req.body;
+    const userId = req.user._id;
+
+    // Guard against rapid duplicate clicks (debounce window: 15s)
+    const existingActive = await EmergencyIncident.findOne({
+      userId,
+      status: { $in: ['CREATED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED'] },
+      createdAt: { $gte: new Date(Date.now() - 15000) },
+    });
+
+    if (existingActive) {
+      return res.status(200).json({
+        success: true,
+        message: 'Active emergency already in progress. Continuing existing tracking session.',
+        incident: existingActive,
+        trackingUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/track/${existingActive.incidentCode}`,
+      });
+    }
+
+    const incidentCode = generateIncidentCode();
+
+    const incident = await EmergencyIncident.create({
+      incidentCode,
+      userId,
+      category: category || 'GENERAL',
+      triggerType: triggerType || 'MANUAL',
+      status: 'ACTIVE',
+      initialLocation: {
+        latitude: latitude || null,
+        longitude: longitude || null,
+        accuracy: accuracy || null,
+        address: address || '',
+      },
+    });
+
+    // Save initial coordinates into LocationUpdate stream if provided
+    if (latitude && longitude) {
+      await LocationUpdate.create({
+        incidentId: incident._id,
+        userId,
+        latitude,
+        longitude,
+        accuracy: accuracy || 0,
+      });
+    }
+
+    // Retrieve contacts
+    const contacts = await EmergencyContact.find({ userId });
+    const trackingUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/track/${incidentCode}`;
+
+    // Medical notes summary if user consented
+    const medicalProfile = await MedicalProfile.findOne({ userId });
+    let medicalSummary = '';
+    if (medicalProfile && medicalProfile.shareWithResponders) {
+      const blood = medicalProfile.bloodGroup !== 'Unknown' ? `Blood Group: ${medicalProfile.bloodGroup}` : '';
+      const allergies = medicalProfile.allergies?.length ? `Allergies: ${medicalProfile.allergies.join(', ')}` : '';
+      medicalSummary = [blood, allergies].filter(Boolean).join(' | ');
+    }
+
+    incident.status = 'NOTIFYING';
+    await incident.save();
+
+    // Send notifications to contacts
+    const notificationResults = [];
+    let hasFailure = false;
+
+    if (contacts.length === 0) {
+      console.log('ℹ️ No emergency contacts configured for user. Alert logged to system.');
+      incident.status = 'ACTIVE';
+      await incident.save();
+    } else {
+      for (const contact of contacts) {
+        const result = await sendEmergencySMS({
+          incidentId: incident._id,
+          contactId: contact._id,
+          contactName: contact.name,
+          recipientPhone: contact.phone,
+          senderName: req.user.name,
+          incidentCode: incident.incidentCode,
+          category: incident.category,
+          trackingUrl,
+          medicalNotes: medicalSummary,
+        });
+
+        notificationResults.push({
+          contactName: contact.name,
+          phone: contact.phone,
+          provider: result.provider,
+          status: result.status,
+          messageSid: result.messageSid,
+          error: result.error,
+        });
+
+        if (!result.success) {
+          hasFailure = true;
+        }
+      }
+
+      incident.status = hasFailure ? 'PARTIALLY_FAILED' : 'NOTIFIED';
+      await incident.save();
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Emergency SOS activated successfully.',
+      incident: {
+        id: incident._id,
+        incidentCode: incident.incidentCode,
+        category: incident.category,
+        status: incident.status,
+        triggerType: incident.triggerType,
+        initialLocation: incident.initialLocation,
+        createdAt: incident.createdAt,
+        trackingUrl,
+      },
+      notificationResults,
+    });
+  } catch (err) {
+    console.error('SOS trigger error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to trigger emergency SOS.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Record live GPS telemetry (5s updates during emergency)
+ */
+export const recordLocationUpdate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { latitude, longitude, accuracy, speed, heading } = req.body;
+
+    if (latitude === undefined || longitude === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude and longitude are required.',
+      });
+    }
+
+    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: 'Incident not found or unauthorized.',
+      });
+    }
+
+    if (incident.status === 'RESOLVED') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot push location updates to a resolved incident. Tracking terminated.',
+      });
+    }
+
+    const update = await LocationUpdate.create({
+      incidentId: incident._id,
+      userId: req.user._id,
+      latitude,
+      longitude,
+      accuracy: accuracy || 0,
+      speed: speed !== undefined ? speed : null,
+      heading: heading !== undefined ? heading : null,
+      timestamp: new Date(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      update: {
+        id: update._id,
+        latitude: update.latitude,
+        longitude: update.longitude,
+        accuracy: update.accuracy,
+        timestamp: update.timestamp,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to record location update.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Get all coordinate breadcrumbs for an incident
+ */
+export const getLocationHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = await LocationUpdate.find({ incidentId: id }).sort({ timestamp: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: updates.length,
+      updates,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve location history.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Resolve an active incident
+ */
+export const resolveIncident = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: 'Incident not found or unauthorized.',
+      });
+    }
+
+    incident.status = 'RESOLVED';
+    incident.resolvedAt = new Date();
+    incident.resolvedBy = req.user._id;
+    await incident.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Incident marked as RESOLVED. Live tracking terminated.',
+      incident,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to resolve incident.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Get historical incidents for current user
+ */
+export const getIncidentHistory = async (req, res) => {
+  try {
+    const incidents = await EmergencyIncident.find({ userId: req.user._id }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: incidents.length,
+      incidents,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch incident history.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Public / Contact live tracking view for shared links
+ */
+export const getTrackIncident = async (req, res) => {
+  try {
+    const { incidentCode } = req.params;
+
+    const incident = await EmergencyIncident.findOne({ incidentCode });
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emergency incident tracking code not found.',
+      });
+    }
+
+    const user = await User.findById(incident.userId).select('name avatar');
+    const locationUpdates = await LocationUpdate.find({ incidentId: incident._id })
+      .sort({ timestamp: 1 })
+      .limit(100);
+
+    const latestLocation = locationUpdates.length > 0
+      ? locationUpdates[locationUpdates.length - 1]
+      : incident.initialLocation;
+
+    // Check if user allowed medical summary to responders
+    const medicalProfile = await MedicalProfile.findOne({ userId: incident.userId });
+    let medicalSummary = null;
+    if (medicalProfile && medicalProfile.shareWithResponders) {
+      medicalSummary = {
+        bloodGroup: medicalProfile.bloodGroup,
+        allergies: medicalProfile.allergies,
+        medicalConditions: medicalProfile.medicalConditions,
+        emergencyNotes: medicalProfile.emergencyNotes,
+      };
+    }
+
+    const notificationLogs = await NotificationLog.find({ incidentId: incident._id })
+      .select('recipientPhone contactName status provider dispatchedAt channel');
+
+    return res.status(200).json({
+      success: true,
+      incident: {
+        incidentCode: incident.incidentCode,
+        category: incident.category,
+        status: incident.status,
+        createdAt: incident.createdAt,
+        resolvedAt: incident.resolvedAt,
+        senderName: user?.name || 'Emergency User',
+        avatar: user?.avatar || null,
+        initialLocation: incident.initialLocation,
+        latestLocation,
+        audioEvidence: incident.audioEvidence?.fileUrl ? true : false,
+        medicalSummary,
+        locationUpdates,
+        notificationLogs,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve tracking data.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Upload Audio Evidence captured by MediaRecorder API
+ */
+export const uploadAudioEvidence = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { duration } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No audio evidence file uploaded.',
+      });
+    }
+
+    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: 'Incident not found or unauthorized.',
+      });
+    }
+
+    const fileUrl = `/uploads/audio/${req.file.filename}`;
+    incident.audioEvidence = {
+      fileUrl,
+      duration: duration ? Number(duration) : 0,
+      mimetype: req.file.mimetype,
+      recordedAt: new Date(),
+    };
+    await incident.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Audio evidence successfully linked to incident.',
+      audioEvidence: incident.audioEvidence,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload audio evidence.',
+      error: err.message,
+    });
+  }
+};
