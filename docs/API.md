@@ -1,191 +1,93 @@
 # RESTful API Specification
-## Clinical Sanctuary Emergency Alert System
+## Clinical Sanctuary (ClinicalGuard) — Emergency Alert & Response Platform
 
-Base URL: `/api`
+Base URL: `http://localhost:5000/api`
 
-All protected endpoints require an `Authorization: Bearer <token>` header or a valid `jwt` HTTP-only cookie.
+Protected endpoints require an `Authorization: Bearer <token>` header or an authenticated HTTP-only session cookie.
 
 ---
 
 ## 1. Authentication Endpoints (`/api/auth`)
 
-### `POST /api/auth/register`
-Register a new user with email and password.
-- **Request Body:**
-  ```json
-  {
-    "name": "Aditya Chourasiya",
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }
-  ```
-- **Response `201 Created`:**
-  ```json
-  {
-    "success": true,
-    "token": "eyJhbGciOi...",
-    "user": {
-      "id": "664fa...",
-      "name": "Aditya Chourasiya",
-      "email": "user@example.com",
-      "role": "USER"
-    }
-  }
-  ```
-
-### `POST /api/auth/login`
-Authenticate with email and password.
-- **Request Body:**
-  ```json
-  {
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }
-  ```
-- **Response `200 OK`:** Same structure as register.
-
-### `POST /api/auth/google`
-Authenticate using Google Identity Services ID Token.
-- **Request Body:**
-  ```json
-  {
-    "credential": "<Google ID Token string>"
-  }
-  ```
-- **Response `200 OK`:** Authenticates or creates the user after server-side verification and returns session token.
-
-### `GET /api/auth/me` *(Protected)*
-Retrieve current authenticated user profile and verification status.
-
-### `POST /api/auth/logout` *(Protected)*
-Invalidates session cookie and clears client authorization state.
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Public | Register account (`name`, `email`, `password`, optional `role`, `badgeNumber`, `organization`). |
+| `POST` | `/api/auth/login` | Public | Sign in with email and password. |
+| `POST` | `/api/auth/google` | Public | Sign in using server-verified Google ID Token (`credential`). |
+| `GET` | `/api/auth/me` | Protected | Fetch current user session, role, and responder profile if applicable. |
+| `POST` | `/api/auth/logout` | Protected | Invalidate session and clear HTTP-only cookie. |
 
 ---
 
-## 2. Emergency Contacts Endpoints (`/api/contacts`)
+## 2. Emergency Incidents Endpoints (`/api/incidents`)
 
-### `GET /api/contacts` *(Protected)*
-Returns all emergency contacts for the authenticated user.
-
-### `POST /api/contacts` *(Protected)*
-Creates a new emergency contact.
-- **Request Body:**
-  ```json
-  {
-    "name": "Jane Doe",
-    "phone": "+919876543210",
-    "relationship": "Mother",
-    "isPrimary": true,
-    "email": "jane@example.com"
-  }
-  ```
-
-### `PUT /api/contacts/:id` *(Protected)*
-Updates an existing contact owned by the user.
-
-### `DELETE /api/contacts/:id` *(Protected)*
-Removes an emergency contact.
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/incidents/sos` | Protected | Trigger SOS alert (15s debounce, creates incident, dispatches notifications). |
+| `GET` | `/api/incidents/history` | Protected | Retrieve authenticated user's chronological incident activations. |
+| `POST` | `/api/incidents/:id/location` | Protected | Ingest 5-second GPS coordinate breadcrumb during active emergency. |
+| `GET` | `/api/incidents/:id/locations` | Protected | Retrieve all telemetry coordinates for an incident. |
+| `POST` | `/api/incidents/:id/resolve` | Protected | Conclude active emergency, mark safe, and terminate live telemetry. |
+| `POST` | `/api/incidents/:id/cancel` | Protected | Cancel alert as false alarm with mandatory reason logged to audit trail. |
+| `GET` | `/api/incidents/:id/events` | Protected | Retrieve immutable chronological event timeline for incident. |
+| `POST` | `/api/incidents/:id/audio` | Protected | Upload 30-60s ambient audio evidence file (multipart/form-data, max 25MB). |
+| `GET` | `/api/incidents/:id/audio` | Protected | Authenticated streaming of private emergency audio recording. |
+| `GET` | `/api/incidents/track/:code` | Public | Real-time tracking view for contacts and assigned responders. |
 
 ---
 
-## 3. Medical Profile Endpoints (`/api/medical`)
+## 3. Responder Operations Endpoints (`/api/responder`)
+*Requires `role: RESPONDER` or `ADMIN`.*
 
-### `GET /api/medical` *(Protected)*
-Fetches medical profile for current user. Creates default if none exists.
-
-### `PUT /api/medical` *(Protected)*
-Updates medical profile fields.
-- **Request Body:**
-  ```json
-  {
-    "bloodGroup": "O+",
-    "allergies": ["Penicillin", "Sulfa drugs"],
-    "medicalConditions": ["Asthma"],
-    "medications": ["Inhaler"],
-    "emergencyNotes": "Keep rescue inhaler nearby",
-    "voiceConsentGranted": true,
-    "shareWithResponders": true
-  }
-  ```
-
-### `GET /api/medical/export` *(Protected)*
-Exports entire patient profile, emergency contacts, and incident history as a downloadable JSON object.
-
-### `DELETE /api/medical/erase` *(Protected)*
-Permanently erases all medical profile records and audio recordings for the user (Right to be Forgotten).
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/responder/profile` | Retrieve responder profile, unit details, vehicle type, and current duty status. |
+| `POST` | `/api/responder/availability` | Toggle availability on/off duty and broadcast staging location. |
+| `GET` | `/api/responder/incidents` | Discover nearby active emergency incidents eligible for field response. |
+| `POST` | `/api/responder/incidents/:id/accept` | Accept incident dispatch and designate unit as active first responder. |
+| `POST` | `/api/responder/incidents/:id/status` | Update tactical status (`EN_ROUTE`, `ARRIVED`, `RESOLVED`). |
+| `GET` | `/api/responder/incidents/:id/medical` | Access patient emergency medical snapshot if patient consented to share. |
 
 ---
 
-## 4. Emergency SOS & Incident Endpoints (`/api/incidents`)
+## 4. Central Dispatch Endpoints (`/api/dispatch`)
+*Requires `role: DISPATCHER` or `ADMIN`.*
 
-### `POST /api/incidents/sos` *(Protected)*
-Triggers emergency alert workflow.
-- **Request Body:**
-  ```json
-  {
-    "category": "MEDICAL", // "MEDICAL" | "ACCIDENT" | "FIRE" | "CRIME"
-    "triggerType": "MANUAL", // "MANUAL" | "VOICE"
-    "latitude": 26.2183,
-    "longitude": 78.1828,
-    "accuracy": 10.5,
-    "address": "Gwalior, Madhya Pradesh"
-  }
-  ```
-- **Response `201 Created`:**
-  ```json
-  {
-    "success": true,
-    "incident": {
-      "id": "6650...",
-      "incidentCode": "CS-20261021-4821",
-      "category": "MEDICAL",
-      "status": "NOTIFIED",
-      "createdAt": "2026-10-21T17:00:00.000Z",
-      "trackingUrl": "http://localhost:5173/track/CS-20261021-4821"
-    },
-    "notificationResults": [
-      {
-        "contactName": "Jane Doe",
-        "phone": "+919876543210",
-        "status": "SIMULATED",
-        "channel": "SMS"
-      }
-    ]
-  }
-  ```
-
-### `POST /api/incidents/:id/location` *(Protected)*
-Streams a real-time GPS coordinate update during an active emergency.
-- **Request Body:**
-  ```json
-  {
-    "latitude": 26.2188,
-    "longitude": 78.1834,
-    "accuracy": 6.2,
-    "speed": 1.2,
-    "heading": 90.0
-  }
-  ```
-
-### `GET /api/incidents/:id/locations` *(Protected / Tracking)*
-Returns coordinate history for an incident to render real-time breadcrumb trail on the map.
-
-### `POST /api/incidents/:id/audio` *(Protected)*
-Uploads emergency audio recording captured by MediaRecorder API.
-- Multipart form-data containing field `audio` (audio file) and optional `duration`.
-
-### `POST /api/incidents/:id/resolve` *(Protected)*
-Marks an emergency incident as RESOLVED. Stops GPS streaming and seals incident log.
-
-### `GET /api/incidents/history` *(Protected)*
-Retrieves all historical incidents belonging to the user.
-
-### `GET /api/incidents/track/:incidentCode` *(Public / Tokenized)*
-Public tracking endpoint accessed by emergency contacts via SMS link. Returns incident details, live coordinates, and authorized medical summary without exposing private account settings.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/dispatch/queue` | Paginated operational incident queue with category, status, and urgency filters. |
+| `GET` | `/api/dispatch/responders` | Real-time list of all on-duty verified field responders. |
+| `POST` | `/api/dispatch/incidents/:id/assign` | Dispatch a specific responder unit to an emergency case. |
+| `GET` | `/api/dispatch/stats` | Operational metrics (active alerts, fleet capacity, total volume). |
 
 ---
 
-## 5. Healthcare & Hospital Discovery Endpoints (`/api/hospitals`)
+## 5. Emergency Contacts (`/api/contacts`)
+*Protected — Authenticated user's private contact book.*
 
-### `GET /api/hospitals/nearby?lat=26.2183&lng=78.1828&radius=5000`
-Discovers nearby hospitals, clinics, and emergency centers using OpenStreetMap / Overpass API with computed distance and direct Google Maps / Apple Maps navigation links.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/contacts` | List configured emergency contacts. |
+| `POST` | `/api/contacts` | Add contact (`name`, `phone`, `relationship`, `isPrimary`, `email`). |
+| `PUT` | `/api/contacts/:id` | Update contact information or designate as primary contact. |
+| `DELETE` | `/api/contacts/:id` | Remove emergency contact. |
+
+---
+
+## 6. Patient Medical Profile (`/api/medical`)
+*Protected — Sensitive healthcare records.*
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/medical` | Fetch user medical profile (blood group, allergies, medications, notes). |
+| `PUT` | `/api/medical` | Update medical fields, voice consent token, and responder sharing toggle. |
+| `GET` | `/api/medical/export` | Export medical records as portable JSON card. |
+| `DELETE` | `/api/medical/erase` | Permanently expunge medical history under GDPR Right to be Forgotten. |
+
+---
+
+## 7. Healthcare Facilities (`/api/hospitals`)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/hospitals/nearby?lat=...&lng=...&radius=...` | Retrieve nearby verified trauma centers, contact phones, and distance estimates. |

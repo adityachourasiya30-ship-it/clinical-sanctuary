@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import MedicalProfile from '../models/MedicalProfile.js';
+import ResponderProfile from '../models/ResponderProfile.js';
 import { generateToken } from '../utils/jwt.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -39,11 +40,14 @@ export const register = async (req, res) => {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    const allowedRoles = ['USER', 'RESPONDER', 'DISPATCHER'];
+    const assignedRole = req.body.role && allowedRoles.includes(req.body.role) ? req.body.role : 'USER';
+
     const newUser = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      role: 'USER',
+      role: assignedRole,
     });
 
     // Create empty medical profile record
@@ -51,6 +55,19 @@ export const register = async (req, res) => {
       userId: newUser._id,
       bloodGroup: 'Unknown',
     });
+
+    // If registered as Responder, initialize Responder Profile
+    if (assignedRole === 'RESPONDER') {
+      await ResponderProfile.create({
+        userId: newUser._id,
+        badgeNumber: req.body.badgeNumber || `MED-${Math.floor(1000 + Math.random() * 9000)}`,
+        organization: req.body.organization || 'City Emergency Medical Service',
+        specialization: req.body.specialization || 'PARAMEDIC',
+        vehicleType: req.body.vehicleType || 'AMBULANCE',
+        phone: req.body.phone || '',
+        isAvailable: true,
+      });
+    }
 
     const token = generateToken(newUser._id, newUser.role);
 
@@ -266,6 +283,11 @@ export const googleSignIn = async (req, res) => {
  */
 export const getMe = async (req, res) => {
   try {
+    let responderInfo = null;
+    if (req.user.role === 'RESPONDER') {
+      responderInfo = await ResponderProfile.findOne({ userId: req.user._id });
+    }
+
     return res.status(200).json({
       success: true,
       user: {
@@ -275,6 +297,7 @@ export const getMe = async (req, res) => {
         role: req.user.role,
         avatar: req.user.avatar,
         createdAt: req.user.createdAt,
+        responderProfile: responderInfo,
       },
     });
   } catch (err) {

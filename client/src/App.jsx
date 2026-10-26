@@ -8,10 +8,15 @@ import { ContactsPage } from './pages/ContactsPage';
 import { MedicalProfilePage } from './pages/MedicalProfilePage';
 import { IncidentHistoryPage } from './pages/IncidentHistoryPage';
 import { TrackIncidentPage } from './pages/TrackIncidentPage';
+import { HospitalsPage } from './pages/HospitalsPage';
+import { ResponderPage } from './pages/ResponderPage';
+import { DispatcherPage } from './pages/DispatcherPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -21,9 +26,10 @@ const ProtectedRoute = ({ children }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#070b14',
-          color: '#38bdf8',
+          backgroundColor: 'var(--bg-main)',
+          color: 'var(--teal-primary)',
           fontSize: '0.9rem',
+          fontWeight: '700',
         }}
       >
         Initializing Secure Emergency Session...
@@ -33,6 +39,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -49,7 +59,7 @@ export const App = () => {
           {/* Public Emergency Tracking Route */}
           <Route path="/track/:incidentCode" element={<TrackIncidentPage />} />
 
-          {/* Protected Application Routes */}
+          {/* Root Redirect */}
           <Route
             path="/"
             element={
@@ -59,12 +69,24 @@ export const App = () => {
             }
           />
 
+          {/* Main Citizen Application Routes */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <MainLayout>
                   <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/hospitals"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <HospitalsPage />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -103,8 +125,49 @@ export const App = () => {
             }
           />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <SettingsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Operational Role Routes */}
+          <Route
+            path="/responder"
+            element={
+              <ProtectedRoute allowedRoles={['RESPONDER', 'ADMIN']}>
+                <MainLayout>
+                  <ResponderPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dispatch"
+            element={
+              <ProtectedRoute allowedRoles={['DISPATCHER', 'ADMIN']}>
+                <MainLayout>
+                  <DispatcherPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback 404 Route */}
+          <Route
+            path="*"
+            element={
+              <MainLayout>
+                <NotFoundPage />
+              </MainLayout>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

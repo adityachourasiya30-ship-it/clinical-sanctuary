@@ -1,32 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --bg-primary: #070b14;
-  --bg-secondary: #0f172a;
-  --bg-card: #141e33;
-  --bg-card-hover: #1e2942;
-  --border-color: #1e293b;
-  --border-highlight: #334155;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
-  --emergency-red: #ef4444;
-  --emergency-red-hover: #dc2626;
-  --emergency-glow: rgba(239, 68, 68, 0.4);
-  
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* Midnight Teal + Coral Design Tokens */
+  --bg-main: #101B2D;
+  --surface-primary: #18263A;
+  --surface-elevated: #213149;
+  --surface-hover: #293D5A;
+
+  --teal-primary: #19B6A4;
+  --teal-hover: #159E8E;
+  --teal-subtle: rgba(25, 182, 164, 0.12);
+  --teal-border: rgba(25, 182, 164, 0.3);
+
+  --coral-emergency: #FF5A52;
+  --coral-hover: #E84941;
+  --coral-subtle: rgba(255, 90, 82, 0.14);
+  --coral-glow: rgba(255, 90, 82, 0.45);
+
+  --text-main: #F5F7FB;
+  --text-secondary: #AAB8CA;
+  --text-muted: #7E90A8;
+
+  --border-subtle: #24354B;
+  --border-focus: #3A5273;
+
+  --status-success: #10B981;
+  --status-success-bg: rgba(16, 185, 129, 0.12);
+  --status-warning: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-error: #FF5A52;
+  --status-info: #38BDF8;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-full: 9999px;
-  
-  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --shadow-sm: 0 2px 8px rgba(10, 18, 30, 0.4);
+  --shadow-md: 0 8px 24px rgba(10, 18, 30, 0.55);
+  --shadow-lg: 0 16px 40px rgba(10, 18, 30, 0.7);
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -37,12 +52,13 @@
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-main);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-sans);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  line-height: 1.5;
+  line-height: 1.55;
+  overflow-x: hidden;
 }
 
 a {
@@ -54,70 +70,173 @@ button, input, select, textarea {
   font-family: inherit;
 }
 
+/* Accessible focus ring */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--teal-primary);
+  outline-offset: 2px;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-highlight);
+  background: var(--border-subtle);
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-/* Pulsing Red SOS Animation */
-@keyframes sos-pulse {
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Animations */
+@keyframes emergency-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 90, 82, 0.75);
   }
   70% {
-    box-shadow: 0 0 0 35px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 36px rgba(255, 90, 82, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(255, 90, 82, 0);
   }
 }
 
-@keyframes radar-sweep {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.05); opacity: 0.3; }
-  100% { transform: scale(0.95); opacity: 0.8; }
+@keyframes teal-glow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
 }
 
-.animate-pulse-sos {
-  animation: sos-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+@keyframes skeleton-loading {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-radar {
-  animation: radar-sweep 2.5s infinite ease-in-out;
+.animate-emergency-pulse {
+  animation: emergency-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-/* Leaflet Map Styling Override */
+.skeleton {
+  background: linear-gradient(90deg, #18263A 25%, #213149 50%, #18263A 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.6s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Leaflet Dark High-Contrast Theme */
 .leaflet-container {
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
-  background: #0f172a !important;
+  background: #101B2D !important;
+  font-family: var(--font-sans) !important;
   z-index: 10;
 }
 
 .leaflet-tile {
-  filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+  filter: brightness(0.72) invert(1) contrast(2.4) hue-rotate(185deg) saturate(0.35);
 }
 
 .leaflet-popup-content-wrapper {
-  background: var(--bg-card) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-highlight);
+  background: var(--surface-elevated) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .leaflet-popup-tip {
-  background: var(--bg-card) !important;
+  background: var(--surface-elevated) !important;
+}
+
+/* Card & Utility Styles */
+.card-clean {
+  background-color: var(--surface-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card-clean:hover {
+  border-color: var(--border-focus);
+}
+
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.btn-teal {
+  background-color: var(--teal-primary);
+  color: #0B1924;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.btn-teal:hover {
+  background-color: var(--teal-hover);
+  transform: translateY(-1px);
+}
+
+.btn-coral {
+  background-color: var(--coral-emergency);
+  color: #FFFFFF;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.btn-coral:hover {
+  background-color: var(--coral-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--surface-elevated);
+  color: var(--text-main);
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--border-focus);
 }

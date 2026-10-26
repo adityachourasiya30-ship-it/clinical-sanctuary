@@ -1,34 +1,48 @@
 import React from 'react';
-import { HeartPulse, Car, Flame, ShieldAlert } from 'lucide-react';
+import { HeartPulse, Car, Flame, ShieldAlert, Siren, AlertCircle } from 'lucide-react';
 
 const CATEGORIES = [
   {
     id: 'MEDICAL',
     label: 'Medical',
-    subtitle: 'Health & Cardiac Emergency',
+    subtitle: 'Cardiac & Health Crisis',
     icon: HeartPulse,
-    accent: '#ef4444',
+    accent: '#FF5A52',
   },
   {
     id: 'ACCIDENT',
-    label: 'Accident',
-    subtitle: 'Road Incident & Collision',
+    label: 'Road Accident',
+    subtitle: 'Collision & Trauma',
     icon: Car,
-    accent: '#f59e0b',
+    accent: '#F59E0B',
   },
   {
     id: 'FIRE',
-    label: 'Fire',
-    subtitle: 'Smoke & Fire Outbreak',
+    label: 'Fire & Smoke',
+    subtitle: 'Hazmat & Structure Fire',
     icon: Flame,
-    accent: '#f97316',
+    accent: '#FB923C',
   },
   {
     id: 'CRIME',
-    label: 'Safety / Crime',
-    subtitle: 'Personal Threat & Harassment',
+    label: 'Personal Safety',
+    subtitle: 'Threat & Physical Danger',
     icon: ShieldAlert,
-    accent: '#8b5cf6',
+    accent: '#19B6A4',
+  },
+  {
+    id: 'POLICE',
+    label: 'Police Dispatch',
+    subtitle: 'Law Enforcement Need',
+    icon: Siren,
+    accent: '#38BDF8',
+  },
+  {
+    id: 'GENERAL',
+    label: 'Other Danger',
+    subtitle: 'General Emergency',
+    icon: AlertCircle,
+    accent: '#A78BFA',
   },
 ];
 
@@ -36,19 +50,19 @@ export const IncidentCategorySelector = ({ selectedCategory, onSelect, disabled 
   return (
     <div style={{ margin: '1rem 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Select Incident Type
+        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Select Emergency Category
         </span>
-        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-          Auto-defaults to Medical
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          Defaults to Medical
         </span>
       </div>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: '0.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
+          gap: '0.65rem',
         }}
       >
         {CATEGORIES.map((cat) => {
@@ -62,11 +76,11 @@ export const IncidentCategorySelector = ({ selectedCategory, onSelect, disabled 
               disabled={disabled}
               onClick={() => onSelect(cat.id)}
               style={{
-                backgroundColor: isSelected ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 23, 42, 0.65)',
-                border: isSelected ? `2px solid ${cat.accent}` : '1px solid #1e293b',
-                boxShadow: isSelected ? `0 0 15px -3px ${cat.accent}40` : 'none',
-                borderRadius: '10px',
-                padding: '0.85rem 0.6rem',
+                backgroundColor: isSelected ? 'var(--surface-elevated)' : 'var(--surface-primary)',
+                border: isSelected ? `2px solid ${cat.accent}` : '1px solid var(--border-subtle)',
+                boxShadow: isSelected ? `0 0 16px -2px ${cat.accent}45` : 'none',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.75rem 0.5rem',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -77,24 +91,24 @@ export const IncidentCategorySelector = ({ selectedCategory, onSelect, disabled 
             >
               <div
                 style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-full)',
                   backgroundColor: `${cat.accent}20`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: cat.accent,
-                  marginBottom: '0.4rem',
+                  marginBottom: '0.35rem',
                 }}
               >
-                <Icon size={20} strokeWidth={2.2} />
+                <Icon size={18} strokeWidth={2.4} />
               </div>
 
-              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: isSelected ? '#ffffff' : '#cbd5e1' }}>
+              <span style={{ fontSize: '0.825rem', fontWeight: '700', color: isSelected ? 'var(--text-main)' : 'var(--text-secondary)' }}>
                 {cat.label}
               </span>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.2 }}>
                 {cat.subtitle}
               </span>
             </button>

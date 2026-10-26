@@ -4,9 +4,12 @@ import {
   recordLocationUpdate,
   getLocationHistory,
   resolveIncident,
+  cancelIncident,
+  getIncidentEvents,
   getIncidentHistory,
   getTrackIncident,
   uploadAudioEvidence,
+  streamAudioEvidence,
 } from '../controllers/incidentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { sosLimiter } from '../middleware/rateLimiter.js';
@@ -23,6 +26,9 @@ router.get('/history', protect, getIncidentHistory);
 router.post('/:id/location', protect, recordLocationUpdate);
 router.get('/:id/locations', protect, getLocationHistory);
 router.post('/:id/resolve', protect, resolveIncident);
+router.post('/:id/cancel', protect, cancelIncident);
+router.get('/:id/events', protect, getIncidentEvents);
+router.get('/:id/audio', protect, streamAudioEvidence);
 router.post('/:id/audio', protect, uploadAudio.single('audio'), uploadAudioEvidence);
 
 export default router;

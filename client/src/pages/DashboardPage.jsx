@@ -15,11 +15,21 @@ import {
   Heart,
   MapPin,
   Mic,
+  MicOff,
   ShieldCheck,
   AlertTriangle,
   Radio,
   ExternalLink,
   RefreshCw,
+  PhoneCall,
+  Building2,
+  StopCircle,
+  Play,
+  Trash2,
+  CheckCircle,
+  Siren,
+  Ambulance,
+  XCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -32,6 +42,7 @@ export const DashboardPage = () => {
     duration: audioDuration,
     startRecording,
     stopRecording,
+    clearRecording,
     uploadEvidence,
   } = useAudioRecorder();
 
@@ -49,7 +60,7 @@ export const DashboardPage = () => {
 
   const trackingIntervalRef = useRef(null);
 
-  // Load profile, contacts, and active incident status on mount
+  // Load profile, contacts, and active incident on mount
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -66,12 +77,12 @@ export const DashboardPage = () => {
           setMedicalProfile(medRes.data.profile);
         }
 
-        // Check if there is an unresolved active incident
+        // Check for any active unresolved incident
         if (historyRes.data.success && historyRes.data.incidents.length > 0) {
           const latest = historyRes.data.incidents[0];
-          if (latest.status !== 'RESOLVED') {
+          if (!['RESOLVED', 'CANCELLED'].includes(latest.status)) {
             setActiveIncident(latest);
-            setSelectedCategory(latest.category);
+            setSelectedCategory(latest.category || 'MEDICAL');
           }
         }
       } catch (err) {
@@ -104,8 +115,8 @@ export const DashboardPage = () => {
   // Voice SOS trigger callback
   const handleVoiceTrigger = useCallback(
     (detectedPhrase) => {
-      if (!activeIncident) {
-        setStatusMessage(`🚨 Voice SOS Triggered by phrase: "${detectedPhrase}"`);
+      if (!activeIncident || ['RESOLVED', 'CANCELLED'].includes(activeIncident.status)) {
+        setStatusMessage(`🚨 Hands-free Voice SOS Triggered ("${detectedPhrase}")`);
         handleTriggerSOS('VOICE');
       }
     },
@@ -123,7 +134,6 @@ export const DashboardPage = () => {
     enabled: voiceActive,
   });
 
-  // Toggle voice recognition
   const toggleVoiceListener = () => {
     if (voiceActive) {
       stopListening();
@@ -136,7 +146,7 @@ export const DashboardPage = () => {
 
   // SOS Trigger Handler
   const handleTriggerSOS = async (triggerType = 'MANUAL') => {
-    if (activeIncident && activeIncident.status !== 'RESOLVED') {
+    if (activeIncident && !['RESOLVED', 'CANCELLED'].includes(activeIncident.status)) {
       return;
     }
 
@@ -150,7 +160,7 @@ export const DashboardPage = () => {
         latitude: location?.latitude || null,
         longitude: location?.longitude || null,
         accuracy: location?.accuracy || null,
-        address: location?.latitude ? `Lat: ${location.latitude.toFixed(4)}, Lng: ${location.longitude.toFixed(4)}` : 'Location acquiring',
+        address: location?.latitude ? `Lat: ${location.latitude.toFixed(4)}, Lng: ${location.longitude.toFixed(4)}` : 'GPS acquiring',
       };
 
       const res = await api.post('/incidents/sos', payload);
@@ -164,7 +174,7 @@ export const DashboardPage = () => {
           setLocationBreadcrumbs([{ latitude: location.latitude, longitude: location.longitude }]);
         }
 
-        // Start ambient audio recording if user has granted consent
+        // Auto start audio recording if patient gave prior consent
         if (medicalProfile?.voiceConsentGranted) {
           startRecording();
         }
@@ -173,15 +183,15 @@ export const DashboardPage = () => {
       }
     } catch (err) {
       console.error('Failed to trigger SOS:', err);
-      setStatusMessage('Error activating SOS. Please retry or call emergency services directly.');
+      setStatusMessage('Error activating SOS. Please retry or call official emergency services (112).');
     } finally {
       setSosLoading(false);
     }
   };
 
-  // 5-second continuous GPS streaming during active emergency (Milestone 5 requirement)
+  // 5-second continuous GPS streaming during active emergency
   useEffect(() => {
-    if (activeIncident && activeIncident.status !== 'RESOLVED') {
+    if (activeIncident && !['RESOLVED', 'CANCELLED'].includes(activeIncident.status)) {
       const pushLocationTelemetry = async () => {
         if (!navigator.geolocation) return;
 
@@ -209,7 +219,6 @@ export const DashboardPage = () => {
         );
       };
 
-      // Push immediately, then every 5 seconds
       pushLocationTelemetry();
       trackingIntervalRef.current = setInterval(pushLocationTelemetry, 5000);
 
@@ -228,18 +237,15 @@ export const DashboardPage = () => {
   // Resolve Emergency Handler
   const handleResolveEmergency = async (incidentId) => {
     try {
-      // 1. Stop audio recording if active
       if (isRecording) {
         stopRecording();
       }
 
-      // 2. Mark incident resolved
       const res = await api.post(`/incidents/${incidentId}/resolve`);
       if (res.data.success) {
         setActiveIncident(null);
         setStatusMessage('Emergency marked as RESOLVED. Live tracking terminated safely.');
 
-        // 3. Upload audio evidence if captured
         if (audioBlob) {
           try {
             await uploadEvidence(incidentId, audioBlob);
@@ -254,7 +260,24 @@ export const DashboardPage = () => {
     }
   };
 
-  // Grant Audio Consent Callback
+  // Cancel Emergency Handler
+  const handleCancelEmergency = async (incidentId, reason) => {
+    try {
+      if (isRecording) {
+        stopRecording();
+      }
+
+      const res = await api.post(`/incidents/${incidentId}/cancel`, { reason });
+      if (res.data.success) {
+        setActiveIncident(null);
+        setStatusMessage('Emergency alert has been cancelled (false alarm recorded in audit log).');
+      }
+    } catch (err) {
+      console.error('Failed to cancel incident:', err);
+      alert('Error cancelling incident. Please check your connection.');
+    }
+  };
+
   const handleGrantConsent = async () => {
     try {
       const res = await api.put('/medical', { voiceConsentGranted: true });
@@ -266,14 +289,15 @@ export const DashboardPage = () => {
     }
   };
 
-  const isEmergencyActive = activeIncident && activeIncident.status !== 'RESOLVED';
+  const isEmergencyActive = activeIncident && !['RESOLVED', 'CANCELLED'].includes(activeIncident.status);
 
   return (
     <div>
-      {/* Sticky Top Banner during active emergency */}
+      {/* Active Sticky Emergency Banner */}
       <ActiveEmergencyBanner
         incident={activeIncident}
         onResolve={handleResolveEmergency}
+        onCancel={handleCancelEmergency}
       />
 
       {/* Voice Consent Modal */}
@@ -283,20 +307,21 @@ export const DashboardPage = () => {
         onGrantConsent={handleGrantConsent}
       />
 
-      {/* Status or Alert Notification Message */}
+      {/* Status Message Notification */}
       {statusMessage && (
         <div
           style={{
-            backgroundColor: isEmergencyActive ? '#ef444420' : '#10b98120',
-            border: `1px solid ${isEmergencyActive ? '#ef4444' : '#10b981'}`,
-            color: isEmergencyActive ? '#fca5a5' : '#6ee7b7',
+            backgroundColor: isEmergencyActive ? 'var(--coral-subtle)' : 'var(--status-success-bg)',
+            border: `1px solid ${isEmergencyActive ? 'var(--coral-emergency)' : 'var(--status-success)'}`,
+            color: isEmergencyActive ? '#FECDD3' : '#A7F3D0',
             padding: '0.75rem 1rem',
-            borderRadius: '10px',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '0.85rem',
+            fontWeight: '600',
           }}
         >
           <span>{statusMessage}</span>
@@ -309,7 +334,7 @@ export const DashboardPage = () => {
         </div>
       )}
 
-      {/* Main Grid: Left Control Center, Right Map & Hospitals */}
+      {/* Main Grid: Left Control Center, Right Map & Facility Directory */}
       <div
         style={{
           display: 'grid',
@@ -318,425 +343,321 @@ export const DashboardPage = () => {
         }}
       >
         {/* Left Column: SOS & Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Main Emergency Card */}
-          <div
-            style={{
-              backgroundColor: '#0f172a',
-              border: isEmergencyActive ? '2px solid #ef4444' : '1px solid #1e293b',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              boxShadow: isEmergencyActive ? '0 0 30px rgba(239, 68, 68, 0.25)' : 'none',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: isEmergencyActive ? '#ef4444' : '#10b981',
-                    boxShadow: isEmergencyActive ? '0 0 8px #ef4444' : '0 0 8px #10b981',
-                  }}
-                />
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: isEmergencyActive ? '#ef4444' : '#10b981' }}>
-                  {isEmergencyActive ? 'EMERGENCY IN PROGRESS' : 'SYSTEM READY'}
-                </span>
-              </div>
-
-              {activeIncident && (
-                <Link
-                  to={`/track/${activeIncident.incidentCode}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.75rem',
-                    color: '#38bdf8',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <ExternalLink size={13} />
-                  <span>Public Live Tracking Link</span>
-                </Link>
-              )}
-            </div>
-
-            {/* Central SOS Button */}
-            <SOSButton
-              onTrigger={() => handleTriggerSOS('MANUAL')}
-              loading={sosLoading}
-              disabled={isEmergencyActive}
-              activeEmergency={isEmergencyActive}
-            />
-
-            {/* Category Selector */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Emergency SOS Control Card */}
+          <div className="card-clean" style={{ textAlign: 'center' }}>
             <IncidentCategorySelector
               selectedCategory={selectedCategory}
               onSelect={setSelectedCategory}
               disabled={isEmergencyActive}
             />
 
-            {/* Response Pipeline */}
-            <ResponsePipeline
-              status={activeIncident?.status}
-              notificationCount={notificationResults.length || contactsCount}
-              isSimulated={notificationResults.some((n) => n.provider === 'DEV_SIMULATOR')}
+            <SOSButton
+              onTrigger={() => handleTriggerSOS('MANUAL')}
+              loading={sosLoading}
+              disabled={sosLoading}
+              activeEmergency={isEmergencyActive}
             />
 
-            {/* Ambient Audio & Evidence Status */}
+            {/* Quick Helpline Direct Actions */}
             <div
               style={{
-                backgroundColor: '#141e33',
-                border: '1px solid #1e293b',
-                borderRadius: '10px',
-                padding: '0.75rem 1rem',
-                marginTop: '1rem',
+                marginTop: '1.25rem',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--surface-elevated)',
+                border: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'space-around',
+                fontSize: '0.8rem',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    backgroundColor: isRecording ? '#ef444430' : '#1e293b',
-                    color: isRecording ? '#ef4444' : '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Mic size={16} className={isRecording ? 'animate-pulse' : ''} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#f8fafc' }}>
-                    {isRecording ? `Recording Ambient Audio (${audioDuration}s)` : 'Audio Evidence Capture'}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                    {medicalProfile?.voiceConsentGranted
-                      ? 'Consent granted &bull; Activates automatically during emergency'
-                      : 'Consent required before recording'}
-                  </div>
-                </div>
-              </div>
-
-              {!medicalProfile?.voiceConsentGranted && (
-                <button
-                  type="button"
-                  onClick={() => setVoiceConsentModalOpen(true)}
-                  style={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #334155',
-                    color: '#38bdf8',
-                    borderRadius: '6px',
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Configure
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Live Map & Healthcare Facilities */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Map Container Card */}
-          <div
-            style={{
-              backgroundColor: '#0f172a',
-              border: '1px solid #1e293b',
-              borderRadius: '16px',
-              padding: '1.25rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MapPin size={18} color="#ef4444" />
-                <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#f8fafc' }}>
-                  Live Location & Healthcare Map
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={refreshLocation}
-                disabled={gpsLoading}
+              <a
+                href="tel:112"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  background: 'none',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  color: '#94a3b8',
-                  padding: '4px 8px',
-                  fontSize: '0.72rem',
-                  cursor: 'pointer',
+                  gap: '0.35rem',
+                  color: 'var(--coral-emergency)',
+                  fontWeight: '700',
                 }}
               >
-                <RefreshCw size={12} className={gpsLoading ? 'animate-spin' : ''} />
-                <span>Refresh GPS</span>
-              </button>
-            </div>
-
-            {gpsError && (
-              <div
+                <PhoneCall size={14} />
+                Dial 112 (National)
+              </a>
+              <span style={{ color: 'var(--border-subtle)' }}>|</span>
+              <a
+                href="tel:108"
                 style={{
-                  backgroundColor: '#ef444415',
-                  border: '1px solid #ef444440',
-                  color: '#fca5a5',
-                  padding: '0.5rem',
-                  borderRadius: '6px',
-                  fontSize: '0.75rem',
-                  marginBottom: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: 'var(--teal-primary)',
+                  fontWeight: '700',
                 }}
               >
-                {gpsError}
-              </div>
-            )}
-
-            {/* Interactive Leaflet Map */}
-            <EmergencyMap
-              centerCoordinates={location}
-              accuracy={location?.accuracy || 0}
-              breadcrumbCoordinates={locationBreadcrumbs}
-              hospitals={hospitals}
-              height="360px"
-            />
+                <Ambulance size={14} />
+                Dial 108 (Ambulance)
+              </a>
+              <span style={{ color: 'var(--border-subtle)' }}>|</span>
+              <a
+                href="tel:100"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: 'var(--status-info)',
+                  fontWeight: '700',
+                }}
+              >
+                <Siren size={14} />
+                Dial 100 (Police)
+              </a>
+            </div>
           </div>
 
-          {/* Nearby Hospitals & Emergency Facilities */}
-          <div
-            style={{
-              backgroundColor: '#0f172a',
-              border: '1px solid #1e293b',
-              borderRadius: '16px',
-              padding: '1.25rem',
-            }}
-          >
+          {/* Response Lifecycle Pipeline */}
+          <ResponsePipeline
+            status={activeIncident?.status}
+            notificationCount={notificationResults.length}
+            isSimulated={true}
+            assignedResponder={activeIncident?.assignedResponder}
+          />
+
+          {/* Audio Evidence Voice Recorder Card */}
+          <div className="card-clean">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#f8fafc' }}>
-                Surrounding Healthcare Facilities ({hospitals.length})
-              </h4>
-              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                OpenStreetMap & Directory
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Mic size={18} color="var(--teal-primary)" />
+                <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                  Emergency Voice Audio Notes
+                </h4>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                Max 25 MB &bull; Consent Protected
               </span>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.6rem',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                paddingRight: '4px',
-              }}
-            >
-              {hospitals.slice(0, 5).map((hosp) => (
-                <div
-                  key={hosp.id}
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
+              Record a brief audio message describing injuries or hazards. Audio will be securely attached to your incident timeline for authorized responders.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              {!isRecording ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!medicalProfile?.voiceConsentGranted) {
+                      setVoiceConsentModalOpen(true);
+                    } else {
+                      startRecording();
+                    }
+                  }}
+                  className="btn-teal"
+                  style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
+                >
+                  <Mic size={14} />
+                  Start Audio Recording
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="btn-coral"
+                  style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
+                >
+                  <StopCircle size={14} />
+                  Stop Recording ({audioDuration}s)
+                </button>
+              )}
+
+              {audioBlob && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <audio
+                    controls
+                    src={URL.createObjectURL(audioBlob)}
+                    style={{ height: '32px', maxWidth: '200px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={clearRecording}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    title="Discard audio"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Metrics & Overview */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <Link to="/contacts" className="card-clean" style={{ display: 'block' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                  EMERGENCY CONTACTS
+                </span>
+                <Users size={16} color="var(--teal-primary)" />
+              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                {contactsCount} Saved
+              </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--teal-primary)', fontWeight: '600' }}>
+                Manage priority list &rarr;
+              </span>
+            </Link>
+
+            <Link to="/medical-profile" className="card-clean" style={{ display: 'block' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                  PATIENT MEDICAL CARD
+                </span>
+                <Heart size={16} color="var(--coral-emergency)" />
+              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                {medicalProfile?.bloodGroup || 'Unknown'}
+              </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--coral-emergency)', fontWeight: '600' }}>
+                {medicalProfile?.shareWithResponders ? 'Shared with Responders' : 'Private Mode'} &rarr;
+              </span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Column: Live Map & Nearby Facilities */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Map Telemetry Card */}
+          <div className="card-clean" style={{ height: '440px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MapPin size={18} color="var(--teal-primary)" />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                  Emergency GPS Navigation Radar
+                </h4>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={refreshLocation}
+                  disabled={gpsLoading}
                   style={{
-                    backgroundColor: '#141e33',
-                    border: '1px solid #1e293b',
-                    borderRadius: '8px',
-                    padding: '0.65rem 0.85rem',
+                    background: 'none',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-xs)',
+                    color: 'var(--text-secondary)',
+                    padding: '3px 8px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <RefreshCw size={12} className={gpsLoading ? 'animate-spin' : ''} />
+                  Calibrate GPS
+                </button>
+
+                {activeIncident && (
+                  <Link
+                    to={`/track/${activeIncident.incidentCode}`}
+                    target="_blank"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      color: 'var(--teal-primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                    }}
+                  >
+                    Public Track Link <ExternalLink size={12} />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div style={{ flex: 1, minHeight: '340px' }}>
+              <EmergencyMap
+                userLocation={location}
+                breadcrumbs={locationBreadcrumbs}
+                hospitals={hospitals}
+                isEmergency={isEmergencyActive}
+              />
+            </div>
+          </div>
+
+          {/* Nearby Medical Facilities Directory Preview */}
+          <div className="card-clean">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Building2 size={18} color="var(--teal-primary)" />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                  Verified Anchor Healthcare Facilities
+                </h4>
+              </div>
+              <Link to="/hospitals" style={{ fontSize: '0.75rem', color: 'var(--teal-primary)', fontWeight: '700' }}>
+                View All Directory &rarr;
+              </Link>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {hospitals.slice(0, 3).map((h, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '0.7rem 0.9rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                   }}
                 >
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
-                        {hosp.name}
-                      </span>
-                      {hosp.verified && (
-                        <ShieldCheck size={14} color="#10b981" title="Verified Facility" />
-                      )}
+                    <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                      {h.name}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
-                      {hosp.type} &bull; <strong style={{ color: '#38bdf8' }}>{hosp.distanceKm} km</strong>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                      {h.address || 'Emergency Trauma Center'}
                     </div>
                   </div>
 
-                  {hosp.navigationUrl && (
-                    <a
-                      href={hosp.navigationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  <div style={{ textAlign: 'right' }}>
+                    <span
                       style={{
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #334155',
-                        color: '#38bdf8',
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.72rem',
-                        fontWeight: '600',
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        color: 'var(--teal-primary)',
+                        backgroundColor: 'var(--teal-subtle)',
+                        padding: '2px 6px',
+                        borderRadius: 'var(--radius-xs)',
                       }}
                     >
-                      <span>Route</span>
-                      <ExternalLink size={10} />
-                    </a>
-                  )}
+                      {h.distanceKm !== undefined ? `${h.distanceKm} km` : 'Near'}
+                    </span>
+                    {h.phone && (
+                      <a
+                        href={`tel:${h.phone}`}
+                        style={{
+                          display: 'block',
+                          fontSize: '0.7rem',
+                          color: 'var(--coral-emergency)',
+                          fontWeight: '700',
+                          marginTop: '2px',
+                        }}
+                      >
+                        Dial: {h.phone}
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
-
-              {hospitals.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '1rem', color: '#64748b', fontSize: '0.8rem' }}>
-                  Acquiring location coordinates to discover nearby medical centers...
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Bottom Summary Strip: Contacts & Medical Profile snapshot */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1rem',
-          marginTop: '1.5rem',
-        }}
-      >
-        {/* Emergency Contacts Widget */}
-        <div
-          style={{
-            backgroundColor: '#0f172a',
-            border: '1px solid #1e293b',
-            borderRadius: '12px',
-            padding: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '8px',
-                backgroundColor: '#3b82f620',
-                color: '#3b82f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Users size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
-                Emergency Contacts
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                {contactsCount} contact{contactsCount === 1 ? '' : 's'} registered for SMS dispatch
-              </div>
-            </div>
-          </div>
-
-          <Link
-            to="/contacts"
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              color: '#38bdf8',
-              backgroundColor: '#1e293b',
-              padding: '0.4rem 0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #334155',
-            }}
-          >
-            Manage
-          </Link>
-        </div>
-
-        {/* Medical Profile Widget */}
-        <div
-          style={{
-            backgroundColor: '#0f172a',
-            border: '1px solid #1e293b',
-            borderRadius: '12px',
-            padding: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '8px',
-                backgroundColor: '#ef444420',
-                color: '#ef4444',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Heart size={20} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
-                  Medical Profile
-                </span>
-                {medicalProfile?.bloodGroup && (
-                  <span
-                    style={{
-                      backgroundColor: '#ef444420',
-                      color: '#ef4444',
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      fontSize: '0.7rem',
-                      fontWeight: '700',
-                    }}
-                  >
-                    {medicalProfile.bloodGroup}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                {medicalProfile?.allergies?.length || 0} Allergies &bull;{' '}
-                {medicalProfile?.medicalConditions?.length || 0} Conditions
-              </div>
-            </div>
-          </div>
-
-          <Link
-            to="/medical-profile"
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              color: '#38bdf8',
-              backgroundColor: '#1e293b',
-              padding: '0.4rem 0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #334155',
-            }}
-          >
-            Edit Profile
-          </Link>
         </div>
       </div>
     </div>

@@ -3,9 +3,17 @@ import LocationUpdate from '../models/LocationUpdate.js';
 import EmergencyContact from '../models/EmergencyContact.js';
 import MedicalProfile from '../models/MedicalProfile.js';
 import NotificationLog from '../models/NotificationLog.js';
+import IncidentEvent from '../models/IncidentEvent.js';
+import ResponderProfile from '../models/ResponderProfile.js';
 import User from '../models/User.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { generateIncidentCode } from '../utils/idGenerator.js';
 import { sendEmergencySMS } from '../services/notificationService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Trigger SOS Emergency Alert
@@ -45,6 +53,16 @@ export const triggerSOS = async (req, res) => {
         accuracy: accuracy || null,
         address: address || '',
       },
+    });
+
+    // Log Creation Audit Event
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: 'CREATED',
+      actorId: userId,
+      actorRole: 'CITIZEN',
+      description: `Emergency alert activated via ${triggerType || 'MANUAL'} trigger. Category: ${category || 'GENERAL'}.`,
+      metadata: { initialLocation: incident.initialLocation },
     });
 
     // Save initial coordinates into LocationUpdate stream if provided
@@ -241,6 +259,14 @@ export const resolveIncident = async (req, res) => {
     incident.resolvedBy = req.user._id;
     await incident.save();
 
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: 'RESOLVED',
+      actorId: req.user._id,
+      actorRole: req.user.role || 'CITIZEN',
+      description: `Incident marked as RESOLVED by ${req.user.name}.`,
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Incident marked as RESOLVED. Live tracking terminated.',
@@ -315,22 +341,49 @@ export const getTrackIncident = async (req, res) => {
     const notificationLogs = await NotificationLog.find({ incidentId: incident._id })
       .select('recipientPhone contactName status provider dispatchedAt channel');
 
+    // Fetch assigned responder info if present
+    let responderDetails = null;
+    if (incident.assignedResponder) {
+      const respUser = await User.findById(incident.assignedResponder).select('name phone avatar');
+      const respProfile = await ResponderProfile.findOne({ userId: incident.assignedResponder });
+      if (respUser) {
+        responderDetails = {
+          name: respUser.name,
+          phone: respUser.phone || respProfile?.phone || null,
+          badgeNumber: respProfile?.badgeNumber || 'EMS-ACTIVE',
+          organization: respProfile?.organization || 'Emergency Medical Services',
+          vehicleType: respProfile?.vehicleType || 'AMBULANCE',
+          location: respProfile?.currentLocation || null,
+        };
+      }
+    }
+
+    // Fetch recent events timeline
+    const timelineEvents = await IncidentEvent.find({ incidentId: incident._id })
+      .sort({ timestamp: -1 })
+      .limit(20);
+
     return res.status(200).json({
       success: true,
       incident: {
         incidentCode: incident.incidentCode,
         category: incident.category,
         status: incident.status,
+        urgency: incident.urgency || 'HIGH',
         createdAt: incident.createdAt,
         resolvedAt: incident.resolvedAt,
+        cancelledAt: incident.cancelledAt,
+        cancellationReason: incident.cancellationReason,
         senderName: user?.name || 'Emergency User',
         avatar: user?.avatar || null,
         initialLocation: incident.initialLocation,
         latestLocation,
+        assignedResponder: responderDetails,
         audioEvidence: incident.audioEvidence?.fileUrl ? true : false,
         medicalSummary,
         locationUpdates,
         notificationLogs,
+        timelineEvents,
       },
     });
   } catch (err) {
@@ -374,6 +427,14 @@ export const uploadAudioEvidence = async (req, res) => {
     };
     await incident.save();
 
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: 'AUDIO_ATTACHED',
+      actorId: req.user._id,
+      actorRole: 'CITIZEN',
+      description: `Audio recording evidence (${duration ? `${duration}s` : 'audio file'}) attached to emergency incident.`,
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Audio evidence successfully linked to incident.',
@@ -383,6 +444,136 @@ export const uploadAudioEvidence = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to upload audio evidence.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Cancel an active incident (citizen or dispatcher)
+ */
+export const cancelIncident = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const incident = await EmergencyIncident.findById(id);
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: 'Incident not found.',
+      });
+    }
+
+    // Must be incident owner or dispatcher/admin
+    const isOwner = incident.userId.equals(req.user._id);
+    const isAuthorizedStaff = ['DISPATCHER', 'ADMIN'].includes(req.user.role);
+
+    if (!isOwner && !isAuthorizedStaff) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to cancel this incident.',
+      });
+    }
+
+    if (['RESOLVED', 'CANCELLED'].includes(incident.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Incident is already ${incident.status}.`,
+      });
+    }
+
+    incident.status = 'CANCELLED';
+    incident.cancelledAt = new Date();
+    incident.cancellationReason = reason || 'Cancelled by user request.';
+    await incident.save();
+
+    // Log Audit Event
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: 'CANCELLED',
+      actorId: req.user._id,
+      actorRole: req.user.role || 'CITIZEN',
+      description: `Incident cancelled by ${req.user.name}. Reason: ${incident.cancellationReason}`,
+      metadata: { reason: incident.cancellationReason },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Emergency incident has been cancelled. Live tracking halted.',
+      incident,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to cancel incident.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Get full chronological audit events for an incident
+ */
+export const getIncidentEvents = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const incident = await EmergencyIncident.findById(id);
+    if (!incident) {
+      return res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+
+    const events = await IncidentEvent.find({ incidentId: id }).sort({ timestamp: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: events.length,
+      events,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve incident event history.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Protected Audio Evidence Streaming
+ */
+export const streamAudioEvidence = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const incident = await EmergencyIncident.findById(id);
+
+    if (!incident || !incident.audioEvidence?.fileUrl) {
+      return res.status(404).json({ success: false, message: 'Audio evidence not found.' });
+    }
+
+    // Verify authorized party: owner, assigned responder, or admin/dispatcher
+    const isOwner = incident.userId.equals(req.user._id);
+    const isAssigned = incident.assignedResponder && incident.assignedResponder.equals(req.user._id);
+    const isStaff = ['DISPATCHER', 'ADMIN'].includes(req.user.role);
+
+    if (!isOwner && !isAssigned && !isStaff) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to access this private recording.' });
+    }
+
+    const filename = path.basename(incident.audioEvidence.fileUrl);
+    const filePath = path.resolve(__dirname, '../../uploads/audio', filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: 'Audio file missing from server storage.' });
+    }
+
+    res.setHeader('Content-Type', incident.audioEvidence.mimetype || 'audio/webm');
+    const stream = fs.createReadStream(filePath);
+    return stream.pipe(res);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to stream audio evidence.',
       error: err.message,
     });
   }

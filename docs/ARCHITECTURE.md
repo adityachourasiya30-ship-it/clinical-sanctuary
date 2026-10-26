@@ -1,203 +1,134 @@
 # System Architecture & Technical Specifications
-## Clinical Sanctuary (ClinicalGuard) Emergency Alert System
+## Clinical Sanctuary (ClinicalGuard) — Next-Generation Emergency Assistance Platform
+**Tagline:** Precision in every Response  
+**Date:** October 26, 2026
 
 ---
 
 ## 1. High-Level Architecture Overview
 
-Clinical Sanctuary follows a modern three-tier decoupled client-server architecture designed for high availability, low latency, and graceful degradation in critical emergencies.
+Clinical Sanctuary follows a modern three-tier decoupled client-server architecture designed for high availability, low latency, and graceful degradation during critical emergency scenarios.
 
 ```mermaid
 flowchart TD
-    subgraph Client["Presentation Layer (Client - React + Vite)"]
-        UI["Emergency Dashboard & SOS Control"]
+    subgraph Client["Presentation Layer (Client - React 18 + Vite)"]
+        UI["Citizen SOS Control & Dashboard"]
         Voice["Voice Recognition (Web Speech API)"]
         AudioRec["Audio Evidence Recorder (MediaRecorder API)"]
         GPS["Location Telemetry (Browser Geolocation API)"]
-        Map["Interactive Map (Leaflet & OpenStreetMap)"]
+        Map["Emergency Map Radar (Leaflet & OpenStreetMap)"]
+        ResponderUI["Responder Duty Desk & Tactical Status"]
+        DispatchUI["Dispatcher Operational Queue & Unit Triage"]
     end
 
-    subgraph Server["Application Layer (Server - Node.js + Express)"]
-        AuthMiddleware["Authentication & Rate Limiting Middleware"]
+    subgraph Server["Application Layer (Server - Node.js v24 + Express)"]
+        AuthMiddleware["Authentication & Role Authorization Middleware"]
         SOSController["SOS Incident & State Machine Engine"]
-        LocController["Live GPS Stream Ingestion Service"]
-        AudioController["Encrypted Audio Storage Service"]
+        LocController["Live GPS Telemetry Ingestion"]
+        AudioController["Protected Audio Evidence Storage"]
+        ResponderController["Responder Discovery & Assignment Engine"]
+        DispatchController["Central Queue & Triage Operations"]
         NotifyService["Notification Dispatcher (Twilio / Dev Simulator)"]
         HospitalService["Healthcare Discovery Service (OSM / Overpass)"]
     end
 
     subgraph Database["Database Layer (MongoDB + Mongoose)"]
-        UserCol[("Users")]
+        UserCol[("Users (Citizen, Responder, Dispatcher)")]
         ContactCol[("Emergency Contacts")]
         MedCol[("Medical Profiles")]
         IncCol[("Emergency Incidents")]
         LocCol[("Location Updates (Time-Series)")]
         LogCol[("Notification Logs")]
+        RespCol[("Responder Profiles")]
+        AssignCol[("Incident Assignments")]
+        EventCol[("Incident Event Audit Trail")]
     end
 
-    UI -->|"HTTP / REST API + Bearer JWT"| AuthMiddleware
-    Voice -->|"Triggers SOS Action"| UI
-    AudioRec -->|"Encrypted Audio Blob Upload"| AudioController
+    UI -->|"REST API + Bearer JWT"| AuthMiddleware
+    ResponderUI -->|"Tactical API"| AuthMiddleware
+    DispatchUI -->|"Operations API"| AuthMiddleware
     GPS -->|"5s Telemetry Pushes"| LocController
-    Map -->|"Hospital Search"| HospitalService
+    AudioRec -->|"Encrypted Audio Blob Upload"| AudioController
 
     AuthMiddleware --> SOSController
+    AuthMiddleware --> ResponderController
+    AuthMiddleware --> DispatchController
     AuthMiddleware --> LocController
     AuthMiddleware --> AudioController
 
     SOSController --> NotifyService
     SOSController --> IncCol
-    LocController --> LocCol
-    AudioController --> IncCol
-    AuthMiddleware --> UserCol
-    AuthMiddleware --> ContactCol
-    AuthMiddleware --> MedCol
+    SOSController --> EventCol
+    ResponderController --> RespCol
+    ResponderController --> AssignCol
+    DispatchController --> IncCol
 ```
 
 ---
 
-## 2. Emergency Incident State Machine
+## 2. Emergency Incident State Machine (Uber-Inspired Lifecycle)
 
-The lifecycle of an emergency alert follows a strictly defined, idempotent finite-state machine to prevent race conditions and duplicate dispatches.
+The incident lifecycle models an automated, truthful state progression. Statuses cannot be skipped or fabricated without valid evidence or authenticated actions.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CREATED: User taps SOS or speaks Voice Trigger
-    CREATED --> ACTIVE: Device coordinates captured & incident logged
-    ACTIVE --> NOTIFYING: Notification provider starts contact dispatch
-    NOTIFYING --> NOTIFIED: All registered primary contacts dispatched
-    NOTIFYING --> PARTIALLY_FAILED: One or more SMS deliveries fail
-    NOTIFIED --> RESOLVED: Authorized user / responder resolves incident
-    PARTIALLY_FAILED --> RESOLVED: Authorized user resolves incident
-    RESOLVED --> [*]: Tracking stopped, audio finalized, case archived
+    [*] --> CREATED: User presses SOS or triggers Voice "Emergency"
+    CREATED --> ACTIVE: Initial GPS coordinates captured
+    ACTIVE --> NOTIFYING: Notification dispatch begins
+    NOTIFYING --> NOTIFIED: Carrier or simulator confirms delivery
+    NOTIFYING --> PARTIALLY_FAILED: 1 or more SMS providers fail
+    NOTIFIED --> ASSIGNED: Field Responder accepts dispatch
+    PARTIALLY_FAILED --> ASSIGNED: Manual or automated unit assignment
+    ASSIGNED --> EN_ROUTE: Responder marks unit moving to scene
+    EN_ROUTE --> ARRIVED: Responder confirms arrival at coordinates
+    ARRIVED --> RESOLVED: Patient safely stabilized / transported
+    ACTIVE --> CANCELLED: Citizen or Dispatcher records false alarm
+    ASSIGNED --> CANCELLED: Citizen marks safe before arrival
+    RESOLVED --> [*]
+    CANCELLED --> [*]
 ```
 
 ### State Definitions
-- **`CREATED`**: Incident initialized in database with initial timestamp and user reference.
-- **`ACTIVE`**: Incident confirmed; client begins streaming coordinates every 5 seconds; audio recorder engages if consent was granted.
-- **`NOTIFYING`**: System invokes notification service (Twilio SMS / In-App) for all configured emergency contacts.
-- **`NOTIFIED`**: SMS payloads successfully handed to delivery network or simulated successfully.
-- **`PARTIALLY_FAILED`**: At least one contact notification failed; flagged for review while keeping live tracking operational.
-- **`RESOLVED`**: Emergency terminated by authenticated user or safety responder. GPS streaming loop terminates, audio upload finalizes, and incident is archived.
+1. **CREATED:** Incident code generated (`CS-YYYYMMDD-XXXX`), database record created with high urgency.
+2. **ACTIVE:** Initial location validated; 5-second continuous GPS streaming begins.
+3. **NOTIFYING:** Emergency contacts retrieved and notification dispatch initiated.
+4. **NOTIFIED:** All contacts contacted through carrier SMS or development simulation.
+5. **PARTIALLY_FAILED:** At least one carrier SMS returned an error or timeout; system maintains active alert and logs failure.
+6. **ASSIGNED:** An authorized, verified on-duty responder has accepted dispatch.
+7. **EN_ROUTE:** Responder is actively navigating toward patient coordinates with live ETA.
+8. **ARRIVED:** Responder has arrived at the patient's coordinates.
+9. **RESOLVED:** Emergency concluded; patient stabilized. Live GPS streaming terminates.
+10. **CANCELLED:** False alarm or user accidental trigger cancelled with reason logged to immutable audit history.
 
 ---
 
-## 3. Database Schema Design (MongoDB / Mongoose)
+## 3. The Three User Journeys & Operational Roles
 
-### 3.1 User Collection (`users`)
-```json
-{
-  "_id": "ObjectId",
-  "name": "Aditya Chourasiya",
-  "email": "user@example.com",
-  "passwordHash": "$2a$12$...",
-  "googleId": "104928374...",
-  "avatar": "https://...",
-  "role": "USER", // "USER" | "RESPONDER" | "ADMIN"
-  "createdAt": "ISODate",
-  "updatedAt": "ISODate"
-}
-```
-
-### 3.2 Emergency Contacts Collection (`emergency_contacts`)
-```json
-{
-  "_id": "ObjectId",
-  "userId": "ObjectId (ref: User)",
-  "name": "Jane Doe",
-  "phone": "+919876543210",
-  "relationship": "Mother", // "Parent" | "Spouse" | "Sibling" | "Friend" | "Other"
-  "isPrimary": true,
-  "email": "contact@example.com",
-  "createdAt": "ISODate"
-}
-```
-
-### 3.3 Medical Profile Collection (`medical_profiles`)
-```json
-{
-  "_id": "ObjectId",
-  "userId": "ObjectId (ref: User, unique)",
-  "bloodGroup": "O+", // "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"
-  "allergies": ["Penicillin", "Sulfa drugs", "Pollen"],
-  "medicalConditions": ["Asthma", "Hypertension"],
-  "medications": ["Salbutamol Inhaler", "Amlodipine 5mg"],
-  "emergencyNotes": "Carries rescue inhaler in backpack side pocket.",
-  "voiceConsentGranted": true,
-  "shareWithResponders": true,
-  "updatedAt": "ISODate"
-}
-```
-
-### 3.4 Emergency Incidents Collection (`emergency_incidents`)
-```json
-{
-  "_id": "ObjectId",
-  "incidentCode": "CS-20261021-9841",
-  "userId": "ObjectId (ref: User)",
-  "category": "MEDICAL", // "MEDICAL" | "ACCIDENT" | "FIRE" | "CRIME"
-  "status": "ACTIVE", // "CREATED" | "ACTIVE" | "NOTIFYING" | "NOTIFIED" | "PARTIALLY_FAILED" | "RESOLVED"
-  "triggerType": "MANUAL", // "MANUAL" | "VOICE"
-  "initialLocation": {
-    "latitude": 26.2183,
-    "longitude": 78.1828,
-    "accuracy": 12.5,
-    "address": "MITS Campus, Gwalior, MP, India"
-  },
-  "audioEvidence": {
-    "fileUrl": "/uploads/audio/panic-1718920192.webm",
-    "duration": 42.5,
-    "encryption": "AES-256",
-    "recordedAt": "ISODate"
-  },
-  "resolvedAt": null,
-  "resolvedBy": null,
-  "createdAt": "ISODate",
-  "updatedAt": "ISODate"
-}
-```
-
-### 3.5 Location Updates Collection (`location_updates`)
-*Dedicated scalable collection to avoid document size explosion during continuous 5-second streaming.*
-```json
-{
-  "_id": "ObjectId",
-  "incidentId": "ObjectId (ref: EmergencyIncident, indexed)",
-  "userId": "ObjectId (ref: User)",
-  "latitude": 26.2185,
-  "longitude": 78.1830,
-  "accuracy": 8.2,
-  "speed": 1.4,
-  "heading": 120.0,
-  "timestamp": "ISODate"
-}
-```
-
-### 3.6 Notification Logs Collection (`notification_logs`)
-```json
-{
-  "_id": "ObjectId",
-  "incidentId": "ObjectId (ref: EmergencyIncident, indexed)",
-  "contactId": "ObjectId (ref: EmergencyContact)",
-  "contactName": "Jane Doe",
-  "recipientPhone": "+919876543210",
-  "channel": "SMS",
-  "provider": "TWILIO", // "TWILIO" | "DEV_SIMULATOR"
-  "status": "SENT", // "SENT" | "SIMULATED" | "FAILED"
-  "messageSid": "SMxxxxxxx",
-  "error": null,
-  "dispatchedAt": "ISODate"
-}
-```
+| Role | Interface | Key Capabilities |
+|---|---|---|
+| **Citizen (`USER`)** | Emergency Dashboard (`/dashboard`) | 1-touch SOS, voice "Emergency" trigger, consent-based audio recording, contact manager, medical card, live tracking link, official emergency hotline direct dial (112, 108, 100). |
+| **Field Responder (`RESPONDER`)** | Responder Desk (`/responder`) | On-duty availability toggle, incident discovery queue, accept/decline dispatches, status transitions (`EN_ROUTE`, `ARRIVED`, `RESOLVED`), patient medical summary access (if consented). |
+| **Central Dispatcher (`DISPATCHER` / `ADMIN`)** | Dispatch Control Room (`/dispatch`) | Multi-agency incident triage, category/urgency filters, manual responder dispatch, fleet status overview, audit event log review. |
 
 ---
 
-## 4. Security Architecture
+## 4. Database Architecture & Collections
 
-1. **Token Verification**: Google OAuth 2.0 ID tokens sent by the client are strictly verified against Google's public keys via `google-auth-library` `verifyIdToken()`. Client-side payload claims are never trusted directly.
-2. **Session Protection**: JWTs are signed with a strong secret and passed via Authorization headers or secure HTTP-only cookies.
-3. **Password Security**: Passwords are hashed with `bcryptjs` using a minimum salt work factor of 12.
-4. **Data Isolation**: All resource controllers verify that `req.user._id` matches the document owner, forbidding cross-tenant data tampering.
-5. **Rate Limiting**: Auth endpoints and SOS trigger endpoints are protected by `express-rate-limit` to prevent brute force and denial of service.
-6. **HTTP Hardening**: Helmet sets security headers (X-Content-Type-Options, Frameguard, Referrer-Policy, Strict-Transport-Security).
-7. **Storage Privacy**: Audio evidence files uploaded to the server are validated by MIME type (`audio/webm`, `audio/mp4`, `audio/ogg`, `audio/wav`), restricted in maximum file size (25MB), and accessible only by the incident owner or emergency responders.
+### Core Models:
+- **`User`**: Identity, hashed credentials, Google sub ID, role (`USER`, `RESPONDER`, `DISPATCHER`, `ADMIN`).
+- **`EmergencyIncident`**: Unique incident code, status state machine, coordinates, category, urgency, cancellation reason.
+- **`EmergencyContact`**: Trusted recipients, phone numbers, relationship, primary priority flag.
+- **`MedicalProfile`**: Blood group, allergies, chronic conditions, emergency notes, voice consent token, responder sharing toggle.
+- **`LocationUpdate`**: High-frequency coordinate stream during active emergency, compound index `{ incidentId: 1, timestamp: 1 }`.
+- **`NotificationLog`**: Delivery records, carrier message SIDs, error details, status (`SENT`, `SIMULATED`, `FAILED`).
+- **`ResponderProfile`**: Badge number, organization, vehicle type (Ambulance, Patrol Car), availability flag, current location.
+- **`IncidentAssignment`**: Lifecycle assignment records between responders and incidents.
+- **`IncidentEvent`**: Chronological immutable audit trail of every system action and status transition.
+
+---
+
+## 5. Security & Privacy Safeguards
+1. **Truth in Delivery:** Notifications are marked `SIMULATED` unless authenticated by an upstream Twilio API response.
+2. **Audio Evidence Access:** Private audio files are not exposed via open directories; served strictly through authenticated endpoint `GET /api/incidents/:id/audio`.
+3. **Medical Privacy:** Patient consent (`shareWithResponders`) is checked before transmitting health data to responders.
+4. **Official Fallback:** Clear disclaimers explain that Clinical Sanctuary is a supplementary communication system and not a substitute for national emergency numbers (112, 100, 108).

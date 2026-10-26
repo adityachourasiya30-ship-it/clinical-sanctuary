@@ -10,6 +10,8 @@ import contactRoutes from './routes/contactRoutes.js';
 import medicalRoutes from './routes/medicalRoutes.js';
 import incidentRoutes from './routes/incidentRoutes.js';
 import hospitalRoutes from './routes/hospitalRoutes.js';
+import responderRoutes from './routes/responderRoutes.js';
+import dispatchRoutes from './routes/dispatchRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +66,8 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/medical', medicalRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/hospitals', hospitalRoutes);
+app.use('/api/responder', responderRoutes);
+app.use('/api/dispatch', dispatchRoutes);
 
 // 404 Route Handler
 app.use('*', (req, res) => {
