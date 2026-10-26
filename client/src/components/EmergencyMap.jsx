@@ -39,22 +39,50 @@ const hospitalIcon = L.divIcon({
   iconAnchor: [14, 14],
 });
 
+// Uber-style Responder / Ambulance marker icon
+const responderIcon = L.divIcon({
+  className: 'custom-responder-marker',
+  html: `
+    <div style="background: #19b6a4; width: 34px; height: 34px; border-radius: 50%; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(25,182,164,0.9); color: #071A12; font-size: 18px; animation: bounce 1.8s infinite;">
+      🚑
+    </div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+});
+
 export const EmergencyMap = ({
   centerCoordinates,
   accuracy = 0,
   breadcrumbCoordinates = [],
   hospitals = [],
+  assignedResponder = null,
   height = '380px',
+  // Backward compatibility alias props
+  userLocation = null,
+  breadcrumbs = null,
+  isEmergency = false,
 }) => {
+  const coords = centerCoordinates || userLocation;
+  const crumbs = breadcrumbCoordinates.length > 0 ? breadcrumbCoordinates : (breadcrumbs || []);
+
   const defaultPos = [26.2183, 78.1828]; // MITS Gwalior default anchor
   const currentPos =
-    centerCoordinates && centerCoordinates.latitude && centerCoordinates.longitude
-      ? [centerCoordinates.latitude, centerCoordinates.longitude]
+    coords && coords.latitude && coords.longitude
+      ? [coords.latitude, coords.longitude]
       : defaultPos;
 
-  const polylinePositions = breadcrumbCoordinates
+  const polylinePositions = crumbs
     .filter((pt) => pt.latitude && pt.longitude)
     .map((pt) => [pt.latitude, pt.longitude]);
+
+  // Compute responder marker position (either from profile or slightly offset for demo route visualization)
+  const responderPos = assignedResponder
+    ? [
+        assignedResponder.location?.latitude || (currentPos[0] + 0.0055),
+        assignedResponder.location?.longitude || (currentPos[1] + 0.0062),
+      ]
+    : null;
 
   return (
     <div style={{ width: '100%', height, position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
@@ -72,13 +100,13 @@ export const EmergencyMap = ({
         <MapUpdater center={currentPos} />
 
         {/* Live User Position Marker & Accuracy Circle */}
-        {centerCoordinates && (
+        {coords && (
           <>
             <Marker position={currentPos} icon={userIcon}>
               <Popup>
                 <div style={{ padding: '4px' }}>
                   <strong style={{ display: 'block', color: '#ef4444', marginBottom: '2px' }}>
-                    🚨 Your Live Position
+                    🚨 Your Emergency Coordinates
                   </strong>
                   <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
                     Lat: {currentPos[0].toFixed(5)}, Lng: {currentPos[1].toFixed(5)}
@@ -105,6 +133,38 @@ export const EmergencyMap = ({
                 }}
               />
             )}
+          </>
+        )}
+
+        {/* Uber-style Responder Marker & Route Line */}
+        {responderPos && (
+          <>
+            <Marker position={responderPos} icon={responderIcon}>
+              <Popup>
+                <div style={{ padding: '6px' }}>
+                  <strong style={{ display: 'block', color: '#19B6A4', marginBottom: '2px' }}>
+                    🚑 {assignedResponder.vehicle || 'ALS Ambulance (DL-01-EM-402)'}
+                  </strong>
+                  <div style={{ fontSize: '11px', color: '#f8fafc', fontWeight: '600' }}>
+                    {assignedResponder.name || 'Officer Vikram Singh'} (Paramedic)
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                    Status: En Route with Sirens Active
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+
+            {/* Uber dynamic route line between responder and user */}
+            <Polyline
+              positions={[responderPos, currentPos]}
+              pathOptions={{
+                color: '#19b6a4',
+                weight: 4,
+                dashArray: '8, 8',
+                opacity: 0.9,
+              }}
+            />
           </>
         )}
 
@@ -200,8 +260,14 @@ export const EmergencyMap = ({
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
-          User
+          Patient
         </span>
+        {responderPos && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#19B6A4', fontWeight: '700' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#19B6A4' }} />
+            Ambulance
+          </span>
+        )}
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#10b981' }} />
           Hospitals

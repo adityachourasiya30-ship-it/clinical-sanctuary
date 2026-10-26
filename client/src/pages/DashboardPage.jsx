@@ -7,6 +7,7 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { SOSButton } from '../components/SOSButton';
 import { IncidentCategorySelector } from '../components/IncidentCategorySelector';
 import { ResponsePipeline } from '../components/ResponsePipeline';
+import { UberResponseCard } from '../components/UberResponseCard';
 import { EmergencyMap } from '../components/EmergencyMap';
 import { ActiveEmergencyBanner } from '../components/ActiveEmergencyBanner';
 import { VoiceConsentModal } from '../components/VoiceConsentModal';
@@ -30,6 +31,7 @@ import {
   Siren,
   Ambulance,
   XCircle,
+  Smartphone,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -267,14 +269,33 @@ export const DashboardPage = () => {
         stopRecording();
       }
 
-      const res = await api.post(`/incidents/${incidentId}/cancel`, { reason });
+      const cleanId = incidentId || activeIncident?._id || activeIncident?.id || activeIncident?.incidentCode;
+      const res = await api.post(`/incidents/${cleanId}/cancel`, { reason });
       if (res.data.success) {
         setActiveIncident(null);
         setStatusMessage('Emergency alert has been cancelled (false alarm recorded in audit log).');
       }
     } catch (err) {
       console.error('Failed to cancel incident:', err);
-      alert('Error cancelling incident. Please check your connection.');
+      const msg = err.response?.data?.message || err.message || 'Error cancelling incident.';
+      alert(`Error cancelling incident: ${msg}`);
+    }
+  };
+
+  // Dynamic category update during active incident
+  const handleCategoryChangeWhileActive = async (newCategory) => {
+    if (!activeIncident) return;
+    try {
+      const cleanId = activeIncident._id || activeIncident.id || activeIncident.incidentCode;
+      const res = await api.patch(`/incidents/${cleanId}/category`, { category: newCategory });
+      if (res.data.success) {
+        setSelectedCategory(newCategory);
+        setActiveIncident(res.data.incident);
+        setStatusMessage(`Emergency category dynamically updated to ${newCategory}.`);
+      }
+    } catch (err) {
+      console.error('Failed to update category:', err);
+      alert('Could not update category: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -306,6 +327,61 @@ export const DashboardPage = () => {
         onClose={() => setVoiceConsentModalOpen(false)}
         onGrantConsent={handleGrantConsent}
       />
+
+      {/* Universal Mobile Access Link Bar */}
+      <div
+        style={{
+          backgroundColor: 'rgba(25, 182, 164, 0.08)',
+          border: '1px solid var(--teal-border)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.65rem 1rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.6rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: 'var(--radius-xs)',
+              backgroundColor: 'var(--teal-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Smartphone size={16} color="var(--teal-primary)" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              Open on Mobile Device
+            </div>
+            <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+              Connected to WiFi or Hotspot? Access ClinicalGuard at:{' '}
+              <strong style={{ color: 'var(--teal-primary)', fontFamily: 'var(--font-mono)' }}>
+                http://10.212.80.195:5173
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText('http://10.212.80.195:5173');
+            alert('Mobile link copied: http://10.212.80.195:5173\nOpen this in Chrome/Safari on your mobile phone connected to the same WiFi or Hotspot!');
+          }}
+          className="btn-teal"
+          style={{ fontSize: '0.74rem', padding: '0.35rem 0.8rem' }}
+        >
+          Copy Phone Link
+        </button>
+      </div>
 
       {/* Status Message Notification */}
       {statusMessage && (
@@ -349,7 +425,8 @@ export const DashboardPage = () => {
             <IncidentCategorySelector
               selectedCategory={selectedCategory}
               onSelect={setSelectedCategory}
-              disabled={isEmergencyActive}
+              isEmergencyActive={isEmergencyActive}
+              onCategoryChangeWhileActive={handleCategoryChangeWhileActive}
             />
 
             <SOSButton
@@ -416,6 +493,13 @@ export const DashboardPage = () => {
               </a>
             </div>
           </div>
+
+          {/* Uber-Inspired Emergency Assistance & Tracking Card */}
+          <UberResponseCard
+            incident={activeIncident}
+            onStatusUpdated={setActiveIncident}
+            onCancelRequested={() => handleCancelEmergency(activeIncident?._id, 'False Alarm / Accidental')}
+          />
 
           {/* Response Lifecycle Pipeline */}
           <ResponsePipeline
@@ -585,6 +669,10 @@ export const DashboardPage = () => {
                 breadcrumbs={locationBreadcrumbs}
                 hospitals={hospitals}
                 isEmergency={isEmergencyActive}
+                assignedResponder={
+                  activeIncident?.assignedResponder ||
+                  (isEmergencyActive ? { vehicle: 'ALS Ambulance (DL-01-EM-402)', name: 'Officer Vikram Singh' } : null)
+                }
               />
             </div>
           </div>

@@ -267,6 +267,7 @@ export const TrackIncidentPage = () => {
                 breadcrumbs={data.locationUpdates || []}
                 hospitals={hospitals}
                 isEmergency={!isResolved && !isCancelled}
+                assignedResponder={data.assignedResponder}
               />
             </div>
           </div>

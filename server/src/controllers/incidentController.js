@@ -6,6 +6,7 @@ import NotificationLog from '../models/NotificationLog.js';
 import IncidentEvent from '../models/IncidentEvent.js';
 import ResponderProfile from '../models/ResponderProfile.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -14,6 +15,28 @@ import { sendEmergencySMS } from '../services/notificationService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Robust helper to locate an incident by either MongoDB _id or incidentCode
+ */
+const findIncidentByIdOrCode = async (identifier) => {
+  if (!identifier) return null;
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    const inc = await EmergencyIncident.findById(identifier);
+    if (inc) return inc;
+  }
+  return await EmergencyIncident.findOne({ incidentCode: identifier });
+};
+
+/**
+ * Safe ownership verification
+ */
+const isIncidentOwner = (incident, user) => {
+  if (!incident || !incident.userId || !user) return false;
+  const incUserId = incident.userId._id ? incident.userId._id.toString() : incident.userId.toString();
+  const reqUserId = user._id ? user._id.toString() : user.toString();
+  return incUserId === reqUserId;
+};
 
 /**
  * Trigger SOS Emergency Alert
@@ -172,11 +195,20 @@ export const recordLocationUpdate = async (req, res) => {
       });
     }
 
-    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    const incident = await findIncidentByIdOrCode(id);
     if (!incident) {
       return res.status(404).json({
         success: false,
-        message: 'Incident not found or unauthorized.',
+        message: 'Incident not found.',
+      });
+    }
+
+    const isOwner = isIncidentOwner(incident, req.user);
+    const isStaff = ['DISPATCHER', 'ADMIN', 'RESPONDER'].includes(req.user.role);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update location for this incident.',
       });
     }
 
@@ -246,11 +278,20 @@ export const resolveIncident = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    const incident = await findIncidentByIdOrCode(id);
     if (!incident) {
       return res.status(404).json({
         success: false,
-        message: 'Incident not found or unauthorized.',
+        message: 'Incident not found.',
+      });
+    }
+
+    const isOwner = isIncidentOwner(incident, req.user);
+    const isStaff = ['DISPATCHER', 'ADMIN', 'RESPONDER'].includes(req.user.role);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update location for this incident.',
       });
     }
 
@@ -410,11 +451,20 @@ export const uploadAudioEvidence = async (req, res) => {
       });
     }
 
-    const incident = await EmergencyIncident.findOne({ _id: id, userId: req.user._id });
+    const incident = await findIncidentByIdOrCode(id);
     if (!incident) {
       return res.status(404).json({
         success: false,
-        message: 'Incident not found or unauthorized.',
+        message: 'Incident not found.',
+      });
+    }
+
+    const isOwner = isIncidentOwner(incident, req.user);
+    const isStaff = ['DISPATCHER', 'ADMIN', 'RESPONDER'].includes(req.user.role);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update location for this incident.',
       });
     }
 
@@ -457,7 +507,7 @@ export const cancelIncident = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    const incident = await EmergencyIncident.findById(id);
+    const incident = await findIncidentByIdOrCode(id);
     if (!incident) {
       return res.status(404).json({
         success: false,
@@ -466,7 +516,7 @@ export const cancelIncident = async (req, res) => {
     }
 
     // Must be incident owner or dispatcher/admin
-    const isOwner = incident.userId.equals(req.user._id);
+    const isOwner = isIncidentOwner(incident, req.user);
     const isAuthorizedStaff = ['DISPATCHER', 'ADMIN'].includes(req.user.role);
 
     if (!isOwner && !isAuthorizedStaff) {
@@ -518,12 +568,12 @@ export const cancelIncident = async (req, res) => {
 export const getIncidentEvents = async (req, res) => {
   try {
     const { id } = req.params;
-    const incident = await EmergencyIncident.findById(id);
+    const incident = await findIncidentByIdOrCode(id);
     if (!incident) {
       return res.status(404).json({ success: false, message: 'Incident not found.' });
     }
 
-    const events = await IncidentEvent.find({ incidentId: id }).sort({ timestamp: 1 });
+    const events = await IncidentEvent.find({ incidentId: incident._id }).sort({ timestamp: 1 });
 
     return res.status(200).json({
       success: true,
@@ -545,7 +595,7 @@ export const getIncidentEvents = async (req, res) => {
 export const streamAudioEvidence = async (req, res) => {
   try {
     const { id } = req.params;
-    const incident = await EmergencyIncident.findById(id);
+    const incident = await findIncidentByIdOrCode(id);
 
     if (!incident || !incident.audioEvidence?.fileUrl) {
       return res.status(404).json({ success: false, message: 'Audio evidence not found.' });
@@ -576,5 +626,109 @@ export const streamAudioEvidence = async (req, res) => {
       message: 'Failed to stream audio evidence.',
       error: err.message,
     });
+  }
+};
+
+/**
+ * Update active incident emergency category
+ */
+export const updateIncidentCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category } = req.body;
+
+    const allowed = ['MEDICAL', 'ACCIDENT', 'FIRE', 'CRIME', 'POLICE', 'GENERAL'];
+    if (!allowed.includes(category)) {
+      return res.status(400).json({ success: false, message: 'Invalid category.' });
+    }
+
+    const incident = await findIncidentByIdOrCode(id);
+    if (!incident) {
+      return res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+
+    const isOwner = isIncidentOwner(incident, req.user);
+    const isStaff = ['DISPATCHER', 'ADMIN'].includes(req.user.role);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const oldCategory = incident.category;
+    incident.category = category;
+    await incident.save();
+
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: 'CATEGORY_UPDATED',
+      actorId: req.user._id,
+      actorRole: req.user.role || 'CITIZEN',
+      description: `Emergency category updated from ${oldCategory} to ${category}.`,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Emergency category updated to ${category}.`,
+      incident,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to update category.', error: err.message });
+  }
+};
+
+/**
+ * Uber-Style Simulated Dispatch Advancement Flow (Demo & Single-Device testing)
+ */
+export const simulateUberDispatchFlow = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const incident = await findIncidentByIdOrCode(id);
+    if (!incident) {
+      return res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+
+    let responder = await User.findOne({ role: 'RESPONDER' });
+    if (!responder) {
+      responder = await User.findOne({ email: 'vikram.responder@example.com' });
+    }
+
+    let nextStatus = 'ASSIGNED';
+    let description = '';
+
+    if (['CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'].includes(incident.status)) {
+      nextStatus = 'ASSIGNED';
+      incident.assignedResponder = responder?._id || req.user._id;
+      description = 'Ambulance Unit Matched: Officer Vikram Singh (ALS-104) has accepted the dispatch.';
+    } else if (incident.status === 'ASSIGNED') {
+      nextStatus = 'EN_ROUTE';
+      description = 'Ambulance ALS-104 is EN ROUTE with sirens activated. Estimated arrival: ~3 minutes.';
+    } else if (incident.status === 'EN_ROUTE') {
+      nextStatus = 'ARRIVED';
+      description = 'Ambulance unit arrived on scene at patient coordinates. Medical triage initiated.';
+    } else if (incident.status === 'ARRIVED') {
+      nextStatus = 'RESOLVED';
+      incident.resolvedAt = new Date();
+      incident.resolvedBy = responder?._id || req.user._id;
+      description = 'Emergency medical care administered. Patient stabilized. Incident marked RESOLVED.';
+    }
+
+    incident.status = nextStatus;
+    await incident.save();
+
+    await IncidentEvent.create({
+      incidentId: incident._id,
+      eventType: `STATUS_${nextStatus}`,
+      actorId: responder?._id || req.user._id,
+      actorRole: 'RESPONDER',
+      description,
+    });
+
+    return res.status(200).json({
+      success: true,
+      nextStatus,
+      message: description,
+      incident,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Simulation error.', error: err.message });
   }
 };

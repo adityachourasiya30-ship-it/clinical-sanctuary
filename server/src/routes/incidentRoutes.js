@@ -10,6 +10,8 @@ import {
   getTrackIncident,
   uploadAudioEvidence,
   streamAudioEvidence,
+  updateIncidentCategory,
+  simulateUberDispatchFlow,
 } from '../controllers/incidentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { sosLimiter } from '../middleware/rateLimiter.js';
@@ -27,6 +29,8 @@ router.post('/:id/location', protect, recordLocationUpdate);
 router.get('/:id/locations', protect, getLocationHistory);
 router.post('/:id/resolve', protect, resolveIncident);
 router.post('/:id/cancel', protect, cancelIncident);
+router.patch('/:id/category', protect, updateIncidentCategory);
+router.post('/:id/simulate-flow', protect, simulateUberDispatchFlow);
 router.get('/:id/events', protect, getIncidentEvents);
 router.get('/:id/audio', protect, streamAudioEvidence);
 router.post('/:id/audio', protect, uploadAudio.single('audio'), uploadAudioEvidence);
