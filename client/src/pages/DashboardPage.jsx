@@ -311,6 +311,9 @@ export const DashboardPage = () => {
   };
 
   const isEmergencyActive = activeIncident && !['RESOLVED', 'CANCELLED'].includes(activeIncident.status);
+  const mobileUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    ? `${window.location.protocol}//${window.location.host}`
+    : 'http://10.168.189.195:5173';
 
   return (
     <div>
@@ -364,7 +367,7 @@ export const DashboardPage = () => {
             <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
               Connected to WiFi or Hotspot? Access ClinicalGuard at:{' '}
               <strong style={{ color: 'var(--teal-primary)', fontFamily: 'var(--font-mono)' }}>
-                http://10.212.80.195:5173
+                {mobileUrl}
               </strong>
             </div>
           </div>
@@ -373,8 +376,8 @@ export const DashboardPage = () => {
         <button
           type="button"
           onClick={() => {
-            navigator.clipboard.writeText('http://10.212.80.195:5173');
-            alert('Mobile link copied: http://10.212.80.195:5173\nOpen this in Chrome/Safari on your mobile phone connected to the same WiFi or Hotspot!');
+            navigator.clipboard.writeText(mobileUrl);
+            alert(`Mobile link copied: ${mobileUrl}\nOpen this in Chrome/Safari on your mobile phone connected to the same WiFi or Hotspot!`);
           }}
           className="btn-teal"
           style={{ fontSize: '0.74rem', padding: '0.35rem 0.8rem' }}
