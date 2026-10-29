@@ -86,7 +86,15 @@ export const LoginPage = () => {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Authentication failed. Please verify your credentials.');
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.status === 404) {
+        setError('Authentication service endpoint not found (404). Please verify backend URL deployment.');
+      } else if (err.code === 'ERR_NETWORK' || !err.response) {
+        setError('Cannot connect to backend server. The service may be waking up (Render cold-start) or unreachable. Please retry in 15 seconds.');
+      } else {
+        setError(err.message || 'Authentication failed. Please verify your credentials.');
+      }
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -25,19 +26,37 @@ app.use(
   })
 );
 
-// CORS configuration
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+// CORS configuration: support exact Vercel production origin, preview deployments, and local dev
+const explicitOrigins = [
+  process.env.CLIENT_URL,
+  'https://clinical-sanctuary-one.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or same-origin)
-      if (!origin || origin === allowedOrigin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        callback(null, true);
+      // Allow requests with no origin (mobile native apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        explicitOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1');
+
+      if (isAllowed) {
+        callback(null, origin);
       } else {
-        callback(null, true); // Permissive for local dev / testing
+        console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+        callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-seed-secret'],
+    exposedHeaders: ['Set-Cookie'],
   })
 );
 
@@ -50,10 +69,22 @@ app.use(cookieParser());
 const uploadsDir = path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// System Health Check
+const DB_STATES = {
+  0: 'DISCONNECTED',
+  1: 'CONNECTED',
+  2: 'CONNECTING',
+  3: 'DISCONNECTING',
+};
+
+// System Health & Database Diagnostics Endpoint
 app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const isDbConnected = dbState === 1;
+
   res.status(200).json({
     status: 'ONLINE',
+    database: DB_STATES[dbState] || 'UNKNOWN',
+    databaseConnected: isDbConnected,
     project: 'Clinical Sanctuary — Emergency Alert System',
     timestamp: new Date().toISOString(),
     nodeEnv: process.env.NODE_ENV || 'development',

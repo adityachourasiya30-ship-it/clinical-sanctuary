@@ -8,6 +8,21 @@ import { generateToken } from '../utils/jwt.js';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
+ * Cookie options helper:
+ * In production cross-site HTTPS (Vercel frontend + Render backend),
+ * sameSite MUST be 'none' with secure: true so browsers accept third-party cookies.
+ */
+export const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+};
+
+/**
  * Register with Email and Password
  */
 export const register = async (req, res) => {
@@ -71,13 +86,8 @@ export const register = async (req, res) => {
 
     const token = generateToken(newUser._id, newUser.role);
 
-    // Send HTTP-only cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // Send HTTP-only cookie with cross-site production support
+    res.cookie('token', token, getCookieOptions());
 
     return res.status(201).json({
       success: true,
@@ -119,6 +129,7 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
 
     if (!user || !user.passwordHash) {
+      console.warn(`[AUTH DIAGNOSTIC] Failed login attempt for email: ${normalizedEmail} (reason: USER_NOT_FOUND)`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password credentials.',
@@ -127,6 +138,7 @@ export const login = async (req, res) => {
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.warn(`[AUTH DIAGNOSTIC] Failed login attempt for email: ${normalizedEmail} (reason: INVALID_PASSWORD)`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password credentials.',
@@ -138,12 +150,7 @@ export const login = async (req, res) => {
 
     const token = generateToken(user._id, user.role);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', token, getCookieOptions());
 
     return res.status(200).json({
       success: true,
@@ -249,12 +256,7 @@ export const googleSignIn = async (req, res) => {
 
     const token = generateToken(user._id, user.role);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', token, getCookieOptions());
 
     return res.status(200).json({
       success: true,
@@ -312,9 +314,117 @@ export const getMe = async (req, res) => {
  * Logout
  */
 export const logout = async (req, res) => {
-  res.clearCookie('token');
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+  });
   return res.status(200).json({
     success: true,
     message: 'Logged out successfully.',
   });
+};
+
+/**
+ * Idempotent Demo Accounts Seeding (Protected by ADMIN_SEED_SECRET or permitted in development)
+ */
+export const seedDemoAccounts = async (req, res) => {
+  try {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const clientSecret = req.headers['x-seed-secret'] || req.body?.seedSecret;
+    const configuredSecret = process.env.ADMIN_SEED_SECRET || process.env.SEED_SECRET;
+
+    // In production, require matching ADMIN_SEED_SECRET
+    if (isProduction) {
+      if (!configuredSecret || clientSecret !== configuredSecret) {
+        return res.status(403).json({
+          success: false,
+          message: 'Unauthorized. The ADMIN_SEED_SECRET environment variable is required to execute remote database seeding in production.',
+        });
+      }
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('EmergencyPass2026!', salt);
+
+    const demoUsers = [
+      {
+        name: 'Rahul Sharma (Citizen)',
+        email: 'rahul.patient@example.com',
+        role: 'USER',
+      },
+      {
+        name: 'Officer Vikram Singh (EMT-Paramedic)',
+        email: 'vikram.responder@example.com',
+        role: 'RESPONDER',
+      },
+      {
+        name: 'Anita Verma (Dispatcher)',
+        email: 'anita.dispatcher@example.com',
+        role: 'DISPATCHER',
+      },
+    ];
+
+    const results = [];
+
+    for (const demo of demoUsers) {
+      let user = await User.findOne({ email: demo.email });
+      if (!user) {
+        user = await User.create({
+          name: demo.name,
+          email: demo.email,
+          passwordHash,
+          role: demo.role,
+        });
+
+        if (demo.role === 'USER') {
+          await MedicalProfile.findOneAndUpdate(
+            { userId: user._id },
+            {
+              userId: user._id,
+              bloodGroup: 'AB+',
+              allergies: ['Penicillin', 'Sulfa drugs', 'Pollen'],
+              medicalConditions: ['Asthma'],
+              voiceConsentGranted: true,
+              shareWithResponders: true,
+            },
+            { upsert: true, new: true }
+          );
+        } else if (demo.role === 'RESPONDER') {
+          await ResponderProfile.findOneAndUpdate(
+            { userId: user._id },
+            {
+              userId: user._id,
+              badgeNumber: 'EMT-GWL-108',
+              organization: 'City Emergency Ambulance Service (108 Fleet)',
+              specialization: 'PARAMEDIC',
+              vehicleType: 'AMBULANCE',
+              isAvailable: true,
+            },
+            { upsert: true, new: true }
+          );
+        }
+
+        results.push({ email: demo.email, status: 'CREATED', role: demo.role });
+      } else {
+        user.passwordHash = passwordHash;
+        await user.save();
+        results.push({ email: demo.email, status: 'UPDATED_PASSWORD', role: demo.role });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Demo accounts seeded successfully (idempotent).',
+      accounts: results,
+    });
+  } catch (err) {
+    console.error('Demo seed error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to seed demo accounts.',
+      error: err.message,
+    });
+  }
 };
