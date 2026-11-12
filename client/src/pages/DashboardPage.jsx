@@ -707,6 +707,8 @@ export const DashboardPage = () => {
                 breadcrumbs={locationBreadcrumbs}
                 hospitals={hospitals}
                 isEmergency={isEmergencyActive}
+                status={activeIncident?.status || (isEmergencyActive ? 'EN_ROUTE' : 'SEARCHING')}
+                incident={activeIncident}
                 assignedResponder={
                   activeIncident?.assignedResponder ||
                   (isEmergencyActive ? { vehicle: 'ALS Ambulance (DL-01-EM-402)', name: 'Officer Vikram Singh' } : null)
