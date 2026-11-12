@@ -241,7 +241,9 @@ export const EmergencyMap = ({
   const currentTier = incident?.responderTier || assignedResponder?.responderTier || 'TIER_2_MEDICAL';
   const isTier1 = currentTier === 'TIER_1_TRANSPORT';
   const pickupPin = incident?.pickupOtp;
-  const showFloatingCard = Boolean(assignedResponder || isEmergency || status === 'EN_ROUTE' || status === 'ARRIVED');
+  const showFloatingCard = Boolean(
+    assignedResponder || ['ASSIGNED', 'EN_ROUTE', 'ARRIVED'].includes(status)
+  );
 
   return (
     <div

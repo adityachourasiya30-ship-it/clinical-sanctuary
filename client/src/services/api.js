@@ -23,10 +23,12 @@ const api = axios.create({
   },
 });
 
-// Interceptor: inject Bearer token if stored in localStorage
+// Interceptor: inject Bearer token from sessionStorage (tab-isolated) or localStorage (fallback)
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('cs_token');
+    const token =
+      (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cs_token') : null) ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('cs_token') : null);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,10 +43,16 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // If unauthorized on protected routes (except during active checkAuth or login)
-      const currentPath = window.location.pathname;
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
       if (!currentPath.includes('/login') && !currentPath.includes('/track/')) {
-        localStorage.removeItem('cs_token');
-        localStorage.removeItem('cs_user');
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('cs_token');
+          sessionStorage.removeItem('cs_user');
+        }
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('cs_token');
+          localStorage.removeItem('cs_user');
+        }
       }
     }
     return Promise.reject(error);

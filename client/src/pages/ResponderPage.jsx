@@ -60,14 +60,12 @@ export const ResponderPage = () => {
       if (incRes.data.success) {
         setIncidents(incRes.data.incidents || []);
         // Check if responder is already assigned to an ongoing incident
-        const assigned = incRes.data.incidents.find(
-          (inc) =>
-            inc.assignedResponder?._id === user.id ||
-            inc.assignedResponder === user.id ||
-            inc.assignedResponder?._id === user._id ||
-            inc.assignedResponder === user._id
-        );
-        if (assigned && !['RESOLVED', 'CANCELLED'].includes(assigned.status)) {
+        const currentUid = (user?.id || user?._id)?.toString();
+        const assigned = (incRes.data.incidents || []).find((inc) => {
+          const respId = (inc.assignedResponder?._id || inc.assignedResponder)?.toString();
+          return respId === currentUid && !['RESOLVED', 'CANCELLED'].includes(inc.status);
+        });
+        if (assigned) {
           setActiveIncident(assigned);
           fetchMedicalSummary(assigned._id);
         }
@@ -92,13 +90,11 @@ export const ResponderPage = () => {
           const list = incRes.data.incidents || [];
           setIncidents(list);
 
-          const currentUserId = user?.id || user?._id;
-          const assigned = list.find(
-            (inc) =>
-              (inc.assignedResponder?._id === currentUserId ||
-                inc.assignedResponder === currentUserId) &&
-              !['RESOLVED', 'CANCELLED'].includes(inc.status)
-          );
+          const currentUserId = (user?.id || user?._id)?.toString();
+          const assigned = list.find((inc) => {
+            const respId = (inc.assignedResponder?._id || inc.assignedResponder)?.toString();
+            return respId === currentUserId && !['RESOLVED', 'CANCELLED'].includes(inc.status);
+          });
 
           if (assigned) {
             setActiveIncident(assigned);
@@ -152,7 +148,7 @@ export const ResponderPage = () => {
   const handleAcceptIncident = async (incidentId) => {
     setStatusActionLoading(true);
     try {
-      const res = await api.post(`/responder/incidents/${incidentId}/accept`);
+      const res = await api.post(`/responder/incidents/${incidentId}/accept?force=true`);
       if (res.data.success) {
         setActiveIncident(res.data.incident);
         fetchMedicalSummary(incidentId);
@@ -654,11 +650,9 @@ export const ResponderPage = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {incidents.map((inc) => {
-                  const isMine =
-                    inc.assignedResponder?._id === user.id ||
-                    inc.assignedResponder === user.id ||
-                    inc.assignedResponder?._id === user._id ||
-                    inc.assignedResponder === user._id;
+                  const myUid = (user?.id || user?._id)?.toString();
+                  const incRespUid = (inc.assignedResponder?._id || inc.assignedResponder)?.toString();
+                  const isMine = incRespUid && incRespUid === myUid;
 
                   const isTier2Required = inc.responderTier === 'TIER_2_MEDICAL' || inc.urgency === 'CRITICAL';
 

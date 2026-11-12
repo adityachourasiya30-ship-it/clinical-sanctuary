@@ -3,15 +3,21 @@ import api from '../services/api';
 
 const AuthContext = createContext(null);
 
+const getInitialToken = () => {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem('cs_token') || localStorage.getItem('cs_token') || null;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('cs_token') || null);
+  const [token, setToken] = useState(getInitialToken);
   const [loading, setLoading] = useState(true);
 
   // Check current session on mount
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const storedToken = localStorage.getItem('cs_token');
+      const storedToken =
+        sessionStorage.getItem('cs_token') || localStorage.getItem('cs_token');
       if (!storedToken) {
         setLoading(false);
         return;
@@ -21,6 +27,7 @@ export const AuthProvider = ({ children }) => {
         const res = await api.get('/auth/me');
         if (res.data.success) {
           setUser(res.data.user);
+          sessionStorage.setItem('cs_user', JSON.stringify(res.data.user));
           localStorage.setItem('cs_user', JSON.stringify(res.data.user));
         }
       } catch (err) {
@@ -37,6 +44,9 @@ export const AuthProvider = ({ children }) => {
   const handleAuthSuccess = (tokenValue, userValue) => {
     setToken(tokenValue);
     setUser(userValue);
+    // Tab-isolated storage guarantees Tab 1 (Rahul) and Tab 2 (Vikram) don't overwrite each other
+    sessionStorage.setItem('cs_token', tokenValue);
+    sessionStorage.setItem('cs_user', JSON.stringify(userValue));
     localStorage.setItem('cs_token', tokenValue);
     localStorage.setItem('cs_user', JSON.stringify(userValue));
   };
@@ -73,6 +83,8 @@ export const AuthProvider = ({ children }) => {
     }
     setToken(null);
     setUser(null);
+    sessionStorage.removeItem('cs_token');
+    sessionStorage.removeItem('cs_user');
     localStorage.removeItem('cs_token');
     localStorage.removeItem('cs_user');
   };

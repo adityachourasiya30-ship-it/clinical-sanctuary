@@ -3,19 +3,34 @@ import { useEffect, useRef } from 'react';
 /**
  * Smart HTTP Polling Hook for Render Free Tier & React.
  *
- * Features:
- * 1. Sequential execution with AbortController to cancel stale in-flight requests.
- * 2. Document visibility listener: Automatically pauses when document.hidden is true
- *    (saving battery/network) and resumes immediately upon returning to the tab.
- * 3. Prevents request stacking if a cycle takes longer than intervalMs.
- * 4. Silently handles component unmount and standard abort cancellations.
+ * Supports both signatures:
+ * 1) usePolling(asyncCallback, intervalMs, enabled, deps)
+ * 2) usePolling(asyncCallback, { intervalMs, enabled, pauseOnHidden }, deps)
  *
- * @param {Function} asyncCallback - Async function executed on each poll tick: async ({ signal }) => { ... }
- * @param {number} intervalMs - Polling interval in milliseconds (default: 3000ms).
- * @param {boolean} enabled - Whether polling should be active (default: true).
- * @param {Array} deps - Optional dependency list that restarts the polling loop when values change.
+ * Guarantees:
+ * - Tab-switching in single-browser multi-tab testing never permanently halts polling.
+ * - Sequential execution prevents request stacking on network latency.
+ * - Immediate poll trigger on tab focus (visibilitychange) ensures fresh telemetry.
  */
-export const usePolling = (asyncCallback, intervalMs = 3000, enabled = true, deps = []) => {
+export const usePolling = (
+  asyncCallback,
+  intervalOrOptions = 3000,
+  enabledParam = true,
+  deps = []
+) => {
+  let intervalMs = 3000;
+  let enabled = true;
+  let pauseOnHidden = false; // Default false so multi-tab demo syncs smoothly
+
+  if (typeof intervalOrOptions === 'object' && intervalOrOptions !== null) {
+    intervalMs = Number(intervalOrOptions.intervalMs) || 3000;
+    enabled = intervalOrOptions.enabled !== undefined ? Boolean(intervalOrOptions.enabled) : true;
+    pauseOnHidden = Boolean(intervalOrOptions.pauseOnHidden);
+  } else {
+    intervalMs = Number(intervalOrOptions) || 3000;
+    enabled = Boolean(enabledParam);
+  }
+
   const savedCallback = useRef(asyncCallback);
   const activeControllerRef = useRef(null);
   const isExecutingRef = useRef(false);
@@ -40,8 +55,14 @@ export const usePolling = (asyncCallback, intervalMs = 3000, enabled = true, dep
     let isSubscribed = true;
 
     const executePoll = async () => {
-      // Pause polling if the tab is hidden or a previous cycle is currently awaiting
-      if (typeof document !== 'undefined' && document.hidden) return;
+      // If configured to pause on hidden tab, skip this tick but still keep loop alive
+      if (pauseOnHidden && typeof document !== 'undefined' && document.hidden) {
+        if (isSubscribed && enabled) {
+          timerRef.current = setTimeout(executePoll, intervalMs);
+        }
+        return;
+      }
+
       if (isExecutingRef.current) return;
 
       isExecutingRef.current = true;
@@ -71,7 +92,7 @@ export const usePolling = (asyncCallback, intervalMs = 3000, enabled = true, dep
     // Initial immediate invocation
     executePoll();
 
-    // Pause/Resume on tab visibility change
+    // Immediate re-poll on tab visibility change
     const handleVisibilityChange = () => {
       if (typeof document === 'undefined') return;
       if (!document.hidden && enabled && isSubscribed) {
@@ -81,10 +102,12 @@ export const usePolling = (asyncCallback, intervalMs = 3000, enabled = true, dep
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
 
     return () => {
       isSubscribed = false;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
       if (timerRef.current) clearTimeout(timerRef.current);
       if (activeControllerRef.current) {
         try {
@@ -93,7 +116,7 @@ export const usePolling = (asyncCallback, intervalMs = 3000, enabled = true, dep
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervalMs, enabled, ...deps]);
+  }, [intervalMs, enabled, pauseOnHidden, ...deps]);
 };
 
 export default usePolling;

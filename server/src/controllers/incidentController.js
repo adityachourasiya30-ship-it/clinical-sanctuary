@@ -336,7 +336,9 @@ export const resolveIncident = async (req, res) => {
  */
 export const getIncidentHistory = async (req, res) => {
   try {
-    const incidents = await EmergencyIncident.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const incidents = await EmergencyIncident.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('assignedResponder', 'name phone avatar role');
 
     return res.status(200).json({
       success: true,
@@ -735,11 +737,32 @@ export const simulateUberDispatchFlow = async (req, res) => {
       description,
     });
 
+    const respProfile = responder ? await ResponderProfile.findOne({ userId: responder._id }) : null;
+    const responderDetails = responder
+      ? {
+          _id: responder._id,
+          id: responder._id,
+          name: responder.name || 'Officer Vikram Singh',
+          phone: responder.phone || respProfile?.phone || '+919876543220',
+          badgeNumber: respProfile?.badgeNumber || 'EMS-GWL-108',
+          organization: respProfile?.organization || 'Emergency Medical Services',
+          vehicleType: respProfile?.vehicleType || 'AMBULANCE',
+          vehicle: 'ALS Ambulance (DL-01-EM-402)',
+          responderTier: respProfile?.responderTier || incident.responderTier || 'TIER_2_MEDICAL',
+          location: respProfile?.currentLocation || { latitude: 26.2201, longitude: 78.1812 },
+        }
+      : null;
+
+    const returnIncident = incident.toObject();
+    if (responderDetails && incident.assignedResponder) {
+      returnIncident.assignedResponder = responderDetails;
+    }
+
     return res.status(200).json({
       success: true,
       nextStatus,
       message: description,
-      incident,
+      incident: returnIncident,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Simulation error.', error: err.message });

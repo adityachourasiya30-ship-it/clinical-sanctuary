@@ -104,7 +104,7 @@ export const UberResponseCard = ({
             <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               UBER-ASSISTANCE WORKFLOW
             </div>
-            <div style={{ fontSize: '1.05rem', fontWeight: '800', color: '#FFFFFF' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
               {isSearching && '🔍 Dispatching Nearest Paramedic Unit...'}
               {isAssigned && '✅ Paramedic Unit Matched & Assigned'}
               {isEnRoute && '🚑 Emergency Unit En Route (Sirens Active)'}
@@ -119,8 +119,8 @@ export const UberResponseCard = ({
           {incident.pickupOtp && (
             <div
               style={{
-                backgroundColor: 'rgba(25, 182, 164, 0.12)',
-                border: '1px solid var(--teal-primary)',
+                backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                border: '1.5px solid var(--teal-primary)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '0.35rem 0.75rem',
                 display: 'flex',
@@ -131,10 +131,10 @@ export const UberResponseCard = ({
             >
               <ShieldCheck size={16} color="var(--teal-primary)" />
               <div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>
                   Pickup OTP
                 </div>
-                <div style={{ fontSize: '0.98rem', fontWeight: '900', color: '#FFFFFF', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ fontSize: '0.98rem', fontWeight: '900', color: '#059669', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
                   {incident.pickupOtp}
                 </div>
               </div>
@@ -243,14 +243,14 @@ export const UberResponseCard = ({
         ))}
       </div>
 
-      {/* If Searching, show animated Radar Ping */}
+      {/* If Searching, show animated Radar Ping & Subtle Solo Demo Match Button */}
       {isSearching && (
         <div
           style={{
             padding: '1.25rem',
             backgroundColor: 'var(--surface-elevated)',
             borderRadius: 'var(--radius-sm)',
-            border: '1px dashed var(--teal-primary)',
+            border: '1.5px dashed var(--teal-primary)',
             textAlign: 'center',
             marginBottom: '1rem',
           }}
@@ -260,7 +260,7 @@ export const UberResponseCard = ({
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(25, 182, 164, 0.15)',
+              backgroundColor: 'rgba(5, 150, 105, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -270,12 +270,37 @@ export const UberResponseCard = ({
           >
             <Radio size={26} color="var(--teal-primary)" />
           </div>
-          <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+          <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
             Broadcasting to Nearest Emergency Fleets
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto' }}>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto 0.85rem auto', lineHeight: 1.4 }}>
             Locating certified paramedic units and ALS ambulances within Gwalior emergency corridor...
           </div>
+
+          <button
+            type="button"
+            onClick={handleSimulateNextStep}
+            disabled={advancing}
+            style={{
+              backgroundColor: 'rgba(5, 150, 105, 0.12)',
+              color: '#059669',
+              border: '1.5px solid #059669',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.78rem',
+              fontWeight: '800',
+              cursor: advancing ? 'not-allowed' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15)',
+              transition: 'all 0.15s ease',
+            }}
+            title="Instantly simulate an incoming responder match for solo testing without opening a second tab"
+          >
+            <Zap size={14} color="#059669" />
+            {advancing ? 'Connecting Fleet Dispatch...' : '⚡ Simulate Responder Match (Demo)'}
+          </button>
         </div>
       )}
 
@@ -301,7 +326,7 @@ export const UberResponseCard = ({
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(25, 182, 164, 0.2)',
+                backgroundColor: 'rgba(5, 150, 105, 0.15)',
                 border: '2px solid var(--teal-primary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -313,7 +338,7 @@ export const UberResponseCard = ({
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#FFFFFF' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)' }}>
                   {responder.name || 'Officer Vikram Singh'}
                 </span>
                 <span title="Verified Emergency Responder" style={{ display: 'flex' }}>
@@ -387,7 +412,7 @@ export const UberResponseCard = ({
         >
           <Zap size={14} color="var(--teal-primary)" />
           {advancing ? 'Updating Fleet Dispatch...' : (
-            isSearching ? '⚡ Auto-Match Nearby Paramedic (Demo)' : (
+            isSearching ? '⚡ Simulate Responder Match (Demo)' : (
               isAssigned ? '⚡ Start Driving (Switch to EN_ROUTE)' : (
                 isEnRoute ? '⚡ Mark Paramedic ARRIVED' : '⚡ Complete Medical Care (RESOLVE)'
               )

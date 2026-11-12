@@ -96,6 +96,7 @@ const seedDatabase = async () => {
     organization: 'Gwalior Emergency Ambulance Service (108 Fleet)',
     specialization: 'PARAMEDIC',
     vehicleType: 'AMBULANCE',
+    responderTier: 'TIER_2_MEDICAL',
     phone: '+919876543220',
     isAvailable: true,
     currentLocation: {
