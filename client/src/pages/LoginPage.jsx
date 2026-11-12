@@ -36,53 +36,81 @@ export const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Initialize Google Identity Services (GIS) if available
+  // Initialize Google Identity Services (GIS) with polling until script is ready
   useEffect(() => {
     /* global google */
     const googleClientId =
       import.meta.env.VITE_GOOGLE_CLIENT_ID ||
       '813055677635-42mrogglutqkbi8ia9ouvj9latagu6dd.apps.googleusercontent.com';
 
-    if (typeof window !== 'undefined' && window.google && googleClientId) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: async (response) => {
-            if (response.credential) {
-              setLoading(true);
-              try {
-                const res = await googleLogin(response.credential);
-                if (res?.user?.roleSelected === false) {
-                  navigate('/dashboard');
-                } else if (res?.user?.role === 'RESPONDER') {
-                  navigate('/responder');
-                } else if (res?.user?.role === 'DISPATCHER') {
-                  navigate('/dispatch');
-                } else {
-                  navigate('/dashboard');
-                }
-              } catch (err) {
-                setError(err.response?.data?.message || 'Google authentication failed.');
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-        });
+    let isMounted = true;
 
-        const googleBtnDiv = document.getElementById('googleSignInBtn');
-        if (googleBtnDiv) {
-          window.google.accounts.id.renderButton(googleBtnDiv, {
-            theme: 'filled_black',
-            size: 'large',
-            shape: 'pill',
-            width: '100%',
+    const setupGoogle = () => {
+      if (!isMounted) return;
+      if (typeof window !== 'undefined' && window.google?.accounts?.id && googleClientId) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            callback: async (response) => {
+              if (response.credential) {
+                setLoading(true);
+                try {
+                  const res = await googleLogin(response.credential);
+                  if (res?.user?.roleSelected === false) {
+                    navigate('/dashboard');
+                  } else if (res?.user?.role === 'RESPONDER') {
+                    navigate('/responder');
+                  } else if (res?.user?.role === 'DISPATCHER') {
+                    navigate('/dispatch');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                } catch (err) {
+                  setError(err.response?.data?.message || 'Google authentication failed.');
+                } finally {
+                  setLoading(false);
+                }
+              }
+            },
           });
+
+          const googleBtnDiv = document.getElementById('googleSignInBtn');
+          if (googleBtnDiv) {
+            googleBtnDiv.innerHTML = '';
+            window.google.accounts.id.renderButton(googleBtnDiv, {
+              theme: 'filled_black',
+              size: 'large',
+              shape: 'pill',
+              width: '100%',
+              text: 'continue_with',
+            });
+          }
+        } catch (e) {
+          console.warn('Google Identity Services setup warning:', e);
         }
-      } catch (e) {
-        console.warn('Google Identity Services init warning:', e);
       }
+    };
+
+    if (window.google?.accounts?.id) {
+      setupGoogle();
+    } else {
+      const timer = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          setupGoogle();
+          clearInterval(timer);
+        }
+      }, 150);
+      return () => {
+        isMounted = false;
+        clearInterval(timer);
+      };
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [googleLogin, navigate]);
 
   const handleSubmit = async (e) => {
