@@ -45,6 +45,18 @@ const responderProfileSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    completedRescues: {
+      type: Number,
+      default: 0,
+    },
+    impactPoints: {
+      type: Number,
+      default: 0,
+    },
+    referralCredits: {
+      type: Number,
+      default: 0,
+    },
     isAvailable: {
       type: Boolean,
       default: true,

@@ -1,47 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  /* Midnight Teal + Coral Design Tokens */
-  --bg-main: #101B2D;
-  --surface-primary: #18263A;
-  --surface-elevated: #213149;
-  --surface-hover: #293D5A;
+  /* Calm Human-Centric Emergency Design System */
+  --bg-main: #FAF9F6;          /* Warm Alabaster Off-White */
+  --surface-primary: #FFFFFF;  /* Crisp Elevated White Card */
+  --surface-elevated: #F8FAFC; /* Soft Slate Tint */
+  --surface-hover: #F1F5F9;
 
-  --teal-primary: #19B6A4;
-  --teal-hover: #159E8E;
-  --teal-subtle: rgba(25, 182, 164, 0.12);
-  --teal-border: rgba(25, 182, 164, 0.3);
+  --teal-primary: #059669;     /* Calm Sage Emerald (Safe / Active Help) */
+  --teal-hover: #047857;
+  --teal-subtle: rgba(5, 150, 105, 0.1);
+  --teal-border: rgba(5, 150, 105, 0.25);
 
-  --coral-emergency: #FF5A52;
-  --coral-hover: #E84941;
-  --coral-subtle: rgba(255, 90, 82, 0.14);
-  --coral-glow: rgba(255, 90, 82, 0.45);
+  --coral-emergency: #E11D48;  /* Warm Coral Crimson (SOS / Immediate Triage) */
+  --coral-hover: #BE123C;
+  --coral-subtle: rgba(225, 29, 72, 0.1);
+  --coral-glow: rgba(225, 29, 72, 0.35);
 
-  --text-main: #F5F7FB;
-  --text-secondary: #AAB8CA;
-  --text-muted: #7E90A8;
+  --text-main: #0F172A;        /* Deep Slate (Optimal High-Readability Contrast) */
+  --text-secondary: #475569;   /* Slate Gray */
+  --text-muted: #64748B;
 
-  --border-subtle: #24354B;
-  --border-focus: #3A5273;
+  --border-subtle: #E2E8F0;    /* Soft Slate Border */
+  --border-focus: #CBD5E1;
 
-  --status-success: #10B981;
-  --status-success-bg: rgba(16, 185, 129, 0.12);
-  --status-warning: #F59E0B;
-  --status-warning-bg: rgba(245, 158, 11, 0.12);
-  --status-error: #FF5A52;
-  --status-info: #38BDF8;
+  --status-success: #059669;
+  --status-success-bg: rgba(5, 150, 105, 0.1);
+  --status-warning: #D97706;
+  --status-warning-bg: rgba(217, 119, 6, 0.1);
+  --status-error: #E11D48;
+  --status-info: #0284C7;
 
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 2px 8px rgba(10, 18, 30, 0.4);
-  --shadow-md: 0 8px 24px rgba(10, 18, 30, 0.55);
-  --shadow-lg: 0 16px 40px rgba(10, 18, 30, 0.7);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.11), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
 
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -78,88 +78,77 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
+  background: #CBD5E1;
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: #94A3B8;
 }
 
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* Animations */
-@keyframes emergency-pulse {
+/* Soft Breathing Halo Animation for SOS Button */
+@keyframes calm-breathing-halo {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 82, 0.75);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.45);
+    transform: scale(1);
   }
-  70% {
-    box-shadow: 0 0 0 36px rgba(255, 90, 82, 0);
+  50% {
+    box-shadow: 0 0 0 22px rgba(225, 29, 72, 0);
+    transform: scale(1.02);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 82, 0);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+    transform: scale(1);
   }
 }
 
-@keyframes teal-glow {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.02); }
-}
-
-@keyframes skeleton-loading {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+@keyframes emergency-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 32px rgba(225, 29, 72, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+  }
 }
 
 .animate-emergency-pulse {
-  animation: emergency-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  animation: emergency-pulse 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-.skeleton {
-  background: linear-gradient(90deg, #18263A 25%, #213149 50%, #18263A 75%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.6s infinite;
-  border-radius: var(--radius-sm);
+.animate-calm-breathing {
+  animation: calm-breathing-halo 2.8s infinite ease-in-out;
 }
 
-/* Leaflet Dark High-Contrast Theme */
+/* Natural Daylight OpenStreetMap Leaflet Theme */
 .leaflet-container {
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
-  background: #101B2D !important;
+  background: #F8FAFC !important;
   font-family: var(--font-sans) !important;
   z-index: 10;
 }
 
-.leaflet-tile {
-  filter: brightness(0.72) invert(1) contrast(2.4) hue-rotate(185deg) saturate(0.35);
-}
-
+/* Crisp Clean Leaflet Popups */
 .leaflet-popup-content-wrapper {
-  background: var(--surface-elevated) !important;
+  background: #FFFFFF !important;
   color: var(--text-main) !important;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-sm) !important;
   box-shadow: var(--shadow-lg) !important;
 }
 
 .leaflet-popup-tip {
-  background: var(--surface-elevated) !important;
+  background: #FFFFFF !important;
 }
 
 /* Card & Utility Styles */
@@ -169,31 +158,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   border-radius: var(--radius-md);
   padding: 1.25rem;
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card-clean:hover {
   border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
 }
 
 .badge-tag {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
 
 .btn-teal {
   background-color: var(--teal-primary);
-  color: #0B1924;
+  color: #FFFFFF;
   font-weight: 700;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 0.6rem 1.1rem;
+  padding: 0.6rem 1.15rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -211,7 +201,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   font-weight: 700;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 0.6rem 1.1rem;
+  padding: 0.6rem 1.15rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -224,12 +214,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .btn-secondary {
-  background-color: var(--surface-elevated);
+  background-color: var(--surface-primary);
   color: var(--text-main);
   font-weight: 600;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 0.6rem 1.1rem;
+  padding: 0.6rem 1.15rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -237,6 +227,29 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   transition: all 0.15s ease;
 }
 .btn-secondary:hover {
-  background-color: var(--surface-hover);
+  background-color: var(--surface-elevated);
   border-color: var(--border-focus);
+}
+
+/* Printable Certificate Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-certificate, .printable-certificate * {
+    visibility: visible;
+  }
+  .printable-certificate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 2cm;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

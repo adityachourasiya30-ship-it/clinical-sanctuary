@@ -9,6 +9,7 @@ import {
   Clock,
   Sparkles,
   CheckCircle2,
+  Building2,
 } from 'lucide-react';
 import { fetchRoadRoute } from '../services/routingService';
 
@@ -121,6 +122,25 @@ export const EmergencyMap = ({
     summary: 'OSRM Road Route',
   });
   const [animatedPos, setAnimatedPos] = useState(initialResponderPos);
+
+  // Hospital Handover State (When arrived on scene)
+  const [selectedHospital, setSelectedHospital] = useState(null);
+  const [hospitalRoutePolyline, setHospitalRoutePolyline] = useState([]);
+  const [hospitalTelemetry, setHospitalTelemetry] = useState(null);
+
+  const handleSelectHospital = async (hosp) => {
+    setSelectedHospital(hosp);
+    if (hosp?.latitude && hosp?.longitude && currentPos) {
+      const res = await fetchRoadRoute(currentPos, [hosp.latitude, hosp.longitude]);
+      if (res.success) {
+        setHospitalRoutePolyline(res.polyline);
+        setHospitalTelemetry({
+          distanceKm: res.distanceKm,
+          durationMins: res.durationMins,
+        });
+      }
+    }
+  };
 
   const animRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -306,6 +326,33 @@ export const EmergencyMap = ({
                 weight: 3.5,
                 opacity: 0.95,
                 dashArray: routeTelemetry.isFallback ? '8, 8' : undefined,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          </>
+        )}
+
+        {/* Hospital Transfer Road Polyline (When Handover Selected) */}
+        {hospitalRoutePolyline.length > 0 && (
+          <>
+            <Polyline
+              positions={hospitalRoutePolyline}
+              pathOptions={{
+                color: '#059669',
+                weight: 7,
+                opacity: 0.45,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            <Polyline
+              positions={hospitalRoutePolyline}
+              pathOptions={{
+                color: '#10B981',
+                weight: 4,
+                opacity: 0.95,
+                dashArray: '6, 6',
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
@@ -609,6 +656,80 @@ export const EmergencyMap = ({
               Call
             </a>
           </div>
+
+          {/* Hospital Handover Corridor when ARRIVED on scene */}
+          {status === 'ARRIVED' && hospitals && hospitals.length > 0 && (
+            <div
+              style={{
+                width: '100%',
+                marginTop: '0.65rem',
+                paddingTop: '0.65rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.45rem',
+                  flexWrap: 'wrap',
+                  gap: '0.4rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: '800',
+                    color: '#10B981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <Building2 size={13} />
+                  Nearest Hospital Handover Corridor:
+                </span>
+                {hospitalTelemetry && (
+                  <span style={{ fontSize: '0.72rem', color: '#38BDF8', fontWeight: '700' }}>
+                    Transfer Distance: {hospitalTelemetry.distanceKm} km (~{hospitalTelemetry.durationMins} mins)
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '2px' }}>
+                {hospitals.slice(0, 3).map((hosp, idx) => {
+                  const isSelected = selectedHospital?.name === hosp.name;
+                  return (
+                    <button
+                      key={hosp.id || idx}
+                      type="button"
+                      onClick={() => handleSelectHospital(hosp)}
+                      style={{
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '6px',
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                        border: `1.5px solid ${isSelected ? '#10B981' : 'rgba(255, 255, 255, 0.15)'}`,
+                        color: '#FFFFFF',
+                        fontSize: '0.72rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title={`Draw emergency route to ${hosp.name}`}
+                    >
+                      <span>🏥 {hosp.name}</span>
+                      <span style={{ color: '#38BDF8', fontSize: '0.68rem' }}>({hosp.distanceKm} km)</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -267,11 +267,25 @@ export const updateStatus = async (req, res) => {
 
     await incident.save();
 
-    // Update assignment record
+    // Update assignment record and increment impact wallet metrics
     if (status === 'RESOLVED') {
       await IncidentAssignment.findOneAndUpdate(
         { incidentId: incident._id, responderId },
         { status: 'COMPLETED', completedAt: new Date(), notes: notes || '' }
+      );
+
+      const isCritical = incident.responderTier === 'TIER_2_MEDICAL' || incident.urgency === 'CRITICAL';
+      const earnedPoints = isCritical ? 100 : 50;
+
+      await ResponderProfile.findOneAndUpdate(
+        { userId: responderId },
+        {
+          $inc: {
+            completedRescues: 1,
+            impactPoints: earnedPoints,
+            referralCredits: 1,
+          },
+        }
       );
     }
 
