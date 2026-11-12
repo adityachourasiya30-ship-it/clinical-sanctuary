@@ -39,10 +39,14 @@ export const LoginPage = () => {
   // Initialize Google Identity Services (GIS) if available
   useEffect(() => {
     /* global google */
-    if (typeof window !== 'undefined' && window.google) {
+    const googleClientId =
+      import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+      '813055677635-42mrogglutqkbi8ia9ouvj9latagu6dd.apps.googleusercontent.com';
+
+    if (typeof window !== 'undefined' && window.google && googleClientId) {
       try {
         window.google.accounts.id.initialize({
-          client_id: 'your-google-oauth-client-id.apps.googleusercontent.com',
+          client_id: googleClientId,
           callback: async (response) => {
             if (response.credential) {
               setLoading(true);
