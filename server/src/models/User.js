@@ -32,8 +32,16 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['USER', 'RESPONDER', 'DISPATCHER', 'ADMIN'],
-      default: 'USER',
+      enum: ['USER', 'CITIZEN', 'RESPONDER', 'DISPATCHER', 'ADMIN'],
+      default: 'CITIZEN',
+    },
+    roleSelected: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
     },
     lastLoginAt: {
       type: Date,

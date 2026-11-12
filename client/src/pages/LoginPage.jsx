@@ -51,8 +51,16 @@ export const LoginPage = () => {
             if (response.credential) {
               setLoading(true);
               try {
-                await googleLogin(response.credential);
-                navigate('/dashboard');
+                const res = await googleLogin(response.credential);
+                if (res?.user?.roleSelected === false) {
+                  navigate('/dashboard');
+                } else if (res?.user?.role === 'RESPONDER') {
+                  navigate('/responder');
+                } else if (res?.user?.role === 'DISPATCHER') {
+                  navigate('/dispatch');
+                } else {
+                  navigate('/dashboard');
+                }
               } catch (err) {
                 setError(err.response?.data?.message || 'Google authentication failed.');
               } finally {
@@ -85,10 +93,12 @@ export const LoginPage = () => {
     try {
       if (isRegister) {
         await register(name, email, password, { role, badgeNumber, organization });
+        navigate(role === 'RESPONDER' ? '/responder' : (role === 'DISPATCHER' ? '/dispatch' : '/dashboard'));
       } else {
-        await login(email, password);
+        const res = await login(email, password);
+        const userRole = res?.user?.role;
+        navigate(userRole === 'RESPONDER' ? '/responder' : (userRole === 'DISPATCHER' ? '/dispatch' : '/dashboard'));
       }
-      navigate('/dashboard');
     } catch (err) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);

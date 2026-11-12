@@ -230,29 +230,38 @@ export const googleSignIn = async (req, res) => {
     }
 
     const email = payload.email.toLowerCase().trim();
-    let user = await User.findOne({ email });
+    const name = payload.name || email.split('@')[0];
+    const picture = payload.picture || '';
+    const googleId = payload.sub || '';
 
-    if (!user) {
-      // Create user from verified Google profile
-      user = await User.create({
-        name: payload.name || email.split('@')[0],
-        email,
-        googleId: payload.sub,
-        avatar: payload.picture || '',
-        role: 'USER',
-      });
+    // Atomic findOneAndUpdate upsert:
+    // Sets name, email, avatar, googleId, and lastLogin
+    // Sets roleSelected: false and role: 'CITIZEN' on initial insert
+    const user = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          name,
+          email,
+          avatar: picture,
+          googleId,
+          lastLogin: new Date(),
+          lastLoginAt: new Date(),
+        },
+        $setOnInsert: {
+          roleSelected: false,
+          role: 'CITIZEN',
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
-      await MedicalProfile.create({
-        userId: user._id,
-        bloodGroup: 'Unknown',
-      });
-    } else {
-      // Update Google ID & avatar if not already populated
-      if (!user.googleId) user.googleId = payload.sub;
-      if (!user.avatar && payload.picture) user.avatar = payload.picture;
-      user.lastLoginAt = new Date();
-      await user.save();
-    }
+    // Ensure medical profile exists
+    await MedicalProfile.findOneAndUpdate(
+      { userId: user._id },
+      { $setOnInsert: { bloodGroup: 'Unknown' } },
+      { upsert: true }
+    );
 
     const token = generateToken(user._id, user.role);
 
@@ -264,9 +273,11 @@ export const googleSignIn = async (req, res) => {
       token,
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        roleSelected: user.roleSelected ?? false,
         avatar: user.avatar,
       },
     });
@@ -275,6 +286,85 @@ export const googleSignIn = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to verify Google Sign-In credentials.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Update authenticated user's role (First-time selection or live role switch)
+ * PATCH /api/auth/role
+ */
+export const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const allowed = ['CITIZEN', 'USER', 'RESPONDER', 'DISPATCHER'];
+
+    if (!role || !allowed.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid role. Allowed roles: CITIZEN, RESPONDER, DISPATCHER`,
+      });
+    }
+
+    const normalizedRole = role === 'USER' ? 'CITIZEN' : role;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          role: normalizedRole,
+          roleSelected: true,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // If role is RESPONDER, ensure a default ResponderProfile exists
+    if (normalizedRole === 'RESPONDER') {
+      await ResponderProfile.findOneAndUpdate(
+        { userId: updatedUser._id },
+        {
+          $setOnInsert: {
+            badgeNumber: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
+            organization: 'Community Emergency Responder Network',
+            specialization: 'FIRST_AID',
+            vehicleType: 'TWO_WHEELER',
+            responderTier: 'TIER_1_TRANSPORT',
+            isAvailable: true,
+            verificationStatus: 'VERIFIED',
+          },
+        },
+        { upsert: true }
+      );
+    }
+
+    const token = generateToken(updatedUser._id, updatedUser.role);
+    res.cookie('token', token, getCookieOptions());
+
+    return res.status(200).json({
+      success: true,
+      message: `Role successfully set to ${normalizedRole}.`,
+      token,
+      user: {
+        id: updatedUser._id,
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        roleSelected: updatedUser.roleSelected,
+        avatar: updatedUser.avatar,
+      },
+    });
+  } catch (err) {
+    console.error('Update role error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update user role.',
       error: err.message,
     });
   }
@@ -294,9 +384,11 @@ export const getMe = async (req, res) => {
       success: true,
       user: {
         id: req.user._id,
+        _id: req.user._id,
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
+        roleSelected: req.user.roleSelected ?? true,
         avatar: req.user.avatar,
         createdAt: req.user.createdAt,
         responderProfile: responderInfo,

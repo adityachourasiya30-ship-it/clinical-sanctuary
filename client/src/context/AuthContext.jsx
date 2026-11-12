@@ -75,6 +75,14 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const updateRole = async (newRole) => {
+    const res = await api.patch('/auth/role', { role: newRole });
+    if (res.data.success) {
+      handleAuthSuccess(res.data.token, res.data.user);
+    }
+    return res.data;
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -99,6 +107,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         googleLogin,
+        updateRole,
         logout,
       }}
     >

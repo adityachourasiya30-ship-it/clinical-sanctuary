@@ -8,7 +8,10 @@ let _retryTimeout = null;
 const RETRY_DELAY_MS = 8000;
 
 async function tryLocalMongo(uri) {
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+  await mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 3000,
+    dbName: mongoose.connection?.name || 'clinical_sanctuary',
+  });
 }
 
 async function startMemoryServer() {
@@ -29,7 +32,7 @@ export const connectDB = async () => {
     try {
       console.log(`🔄 Connecting to MongoDB: ${process.env.MONGODB_URI}`);
       await tryLocalMongo(process.env.MONGODB_URI);
-      console.log('✅ MongoDB connected.');
+      console.log(`✅ MongoDB connected to database: "${mongoose.connection.name}"`);
       return;
     } catch (err) {
       console.warn(`⚠️  Could not reach ${process.env.MONGODB_URI}: ${err.message}`);
@@ -39,9 +42,9 @@ export const connectDB = async () => {
   // ── Attempt 2: local default ───────────────────────────────────────
   const defaultLocal = 'mongodb://127.0.0.1:27017/clinical_sanctuary';
   try {
-    console.log('🔄 Trying local MongoDB at 127.0.0.1:27017 …');
+    console.log('🔄 Trying local MongoDB at 127.0.0.1:27017/clinical_sanctuary …');
     await tryLocalMongo(defaultLocal);
-    console.log('✅ Connected to local MongoDB.');
+    console.log(`✅ Connected to local MongoDB database: "${mongoose.connection.name}"`);
     return;
   } catch (_) {
     console.warn('⚠️  Local MongoDB not running.');

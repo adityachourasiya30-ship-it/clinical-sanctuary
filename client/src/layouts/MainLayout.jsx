@@ -19,7 +19,9 @@ import {
   Menu,
   X,
   User,
+  Sparkles,
 } from 'lucide-react';
+import { RoleSelectionModal } from '../components/RoleSelectionModal';
 
 export const MainLayout = ({
   children,
@@ -31,6 +33,7 @@ export const MainLayout = ({
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   // Common navigation items
   const baseNavItems = [
@@ -286,10 +289,34 @@ export const MainLayout = ({
                 <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.name}
                 </span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--teal-primary)', fontWeight: '600' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--teal-primary)', fontWeight: '700' }}>
                   {user.role}
                 </span>
               </div>
+
+              {/* Quick Switch Role Pill */}
+              <button
+                type="button"
+                onClick={() => setRoleModalOpen(true)}
+                style={{
+                  backgroundColor: 'var(--surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '999px',
+                  padding: '0.2rem 0.6rem',
+                  fontSize: '0.68rem',
+                  fontWeight: '700',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Switch persona between Citizen, Responder, and Dispatcher"
+              >
+                <Sparkles size={11} color="var(--teal-primary)" />
+                <span>Switch Role</span>
+              </button>
 
               <button
                 type="button"
@@ -348,6 +375,13 @@ export const MainLayout = ({
           Disclaimer: This system supplements emergency communication. In imminent life-threatening crises, dial national emergency <strong>112</strong> immediately.
         </div>
       </footer>
+
+      {/* Role Selection Gate & Persona Switcher */}
+      <RoleSelectionModal
+        isOpen={roleModalOpen || Boolean(user && user.roleSelected === false)}
+        onClose={() => setRoleModalOpen(false)}
+        canDismiss={user?.roleSelected !== false}
+      />
     </div>
   );
 };
