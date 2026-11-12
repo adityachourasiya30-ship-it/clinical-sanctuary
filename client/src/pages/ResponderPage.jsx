@@ -3,6 +3,8 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useGeolocation } from '../hooks/useGeolocation';
 import usePolling from '../hooks/usePolling';
+import { ResponderQuizModal } from '../components/ResponderQuizModal';
+import { CPRMetronomeChecklist } from '../components/CPRMetronomeChecklist';
 import {
   Ambulance,
   ShieldCheck,
@@ -16,6 +18,9 @@ import {
   AlertTriangle,
   RefreshCw,
   UserCheck,
+  Award,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 
 export const ResponderPage = () => {
@@ -31,6 +36,7 @@ export const ResponderPage = () => {
   const [dutyLoading, setDutyLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [enteredOtp, setEnteredOtp] = useState('');
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
 
   // Fetch responder profile and available incidents
   const loadResponderData = async () => {
@@ -136,7 +142,7 @@ export const ResponderPage = () => {
     }
   };
 
-  // Accept an emergency dispatch
+  // Accept an emergency dispatch (enforcing Tier 2 Medical check)
   const handleAcceptIncident = async (incidentId) => {
     setStatusActionLoading(true);
     try {
@@ -148,9 +154,33 @@ export const ResponderPage = () => {
         loadResponderData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to accept incident.');
+      if (err.response?.status === 403 && err.response?.data?.requiresTier === 'TIER_2_MEDICAL') {
+        const takeQuiz = window.confirm(
+          '🚨 Tier-2 Certification Required:\n\n' +
+            err.response.data.message +
+            '\n\nWould you like to take the 5-question First-Aid/CPR Assessment now to unlock Tier-2 Medical dispatches?'
+        );
+        if (takeQuiz) {
+          setQuizModalOpen(true);
+        }
+      } else {
+        alert(err.response?.data?.message || 'Failed to accept incident.');
+      }
     } finally {
       setStatusActionLoading(false);
+    }
+  };
+
+  // Toggle between Tier 1 Transport and Tier 2 Medical (for testing & evaluation)
+  const handleToggleTier = async (newTier) => {
+    try {
+      const res = await api.post('/responder/tier', { tier: newTier });
+      if (res.data.success) {
+        setProfile(res.data.profile);
+        setMessage(`Responder tier updated to ${newTier === 'TIER_2_MEDICAL' ? 'Tier-2 Medical ALS' : 'Tier-1 Transport'}.`);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update tier.');
     }
   };
 
@@ -231,8 +261,73 @@ export const ResponderPage = () => {
           </div>
         </div>
 
-        {/* On Duty Status Toggle Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Right Controls: Tier Badge, Assessment Button, and Duty Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Responder Tier Badge & Upgrade Trigger */}
+          <div
+            style={{
+              padding: '0.45rem 0.85rem',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor:
+                profile?.responderTier === 'TIER_2_MEDICAL'
+                  ? 'rgba(25, 182, 164, 0.15)'
+                  : 'rgba(59, 130, 246, 0.15)',
+              border: `1.5px solid ${
+                profile?.responderTier === 'TIER_2_MEDICAL' ? 'var(--teal-primary)' : 'rgba(59, 130, 246, 0.4)'
+              }`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <Sparkles
+              size={16}
+              color={profile?.responderTier === 'TIER_2_MEDICAL' ? 'var(--teal-primary)' : '#60A5FA'}
+            />
+            <div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Operational Tier
+              </div>
+              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#FFFFFF' }}>
+                {profile?.responderTier === 'TIER_2_MEDICAL' ? 'Tier-2 Medical ALS' : 'Tier-1 Transport'}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setQuizModalOpen(true)}
+            className="btn-secondary"
+            style={{ fontSize: '0.76rem', padding: '0.5rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            title="Take scenario assessment to certify or verify Tier-2 Medical"
+          >
+            <Award size={14} color="var(--teal-primary)" />
+            {profile?.responderTier === 'TIER_2_MEDICAL' ? 'Re-take CPR Quiz' : 'Unlock Tier-2 Medical'}
+          </button>
+
+          {/* Quick Demo Tier Toggle (for testing both restricted & approved flows) */}
+          <button
+            type="button"
+            onClick={() =>
+              handleToggleTier(
+                profile?.responderTier === 'TIER_2_MEDICAL' ? 'TIER_1_TRANSPORT' : 'TIER_2_MEDICAL'
+              )
+            }
+            style={{
+              background: 'none',
+              border: '1px dashed var(--border-subtle)',
+              color: 'var(--text-muted)',
+              fontSize: '0.7rem',
+              padding: '0.45rem 0.65rem',
+              borderRadius: 'var(--radius-xs)',
+              cursor: 'pointer',
+            }}
+            title="Toggle between Tier 1 and Tier 2 instantly to test triage restrictions"
+          >
+            Toggle {profile?.responderTier === 'TIER_2_MEDICAL' ? 'to Tier-1' : 'to Tier-2'}
+          </button>
+
+          {/* On Duty Status Toggle Button */}
           <button
             type="button"
             onClick={toggleDutyStatus}
@@ -445,6 +540,11 @@ export const ResponderPage = () => {
         </div>
       )}
 
+      {/* On-Scene First-Aid Kit & 110 BPM Metronome when ARRIVED */}
+      {activeIncident && activeIncident.status === 'ARRIVED' && (
+        <CPRMetronomeChecklist incident={activeIncident} />
+      )}
+
       {/* Available Incident Discovery Queue */}
       <div className="card-clean">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -477,6 +577,8 @@ export const ResponderPage = () => {
                 inc.assignedResponder?._id === user._id ||
                 inc.assignedResponder === user._id;
 
+              const isTier2Required = inc.responderTier === 'TIER_2_MEDICAL' || inc.urgency === 'CRITICAL';
+
               return (
                 <div
                   key={inc._id}
@@ -493,7 +595,7 @@ export const ResponderPage = () => {
                   }}
                 >
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span
                         style={{
                           fontSize: '0.7rem',
@@ -507,6 +609,24 @@ export const ResponderPage = () => {
                         {inc.category}
                       </span>
                       <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{inc.incidentCode}</strong>
+
+                      <span
+                        style={{
+                          fontSize: '0.66rem',
+                          fontWeight: '800',
+                          padding: '2px 7px',
+                          borderRadius: '999px',
+                          backgroundColor: isTier2Required ? 'var(--coral-subtle)' : 'rgba(59, 130, 246, 0.15)',
+                          color: isTier2Required ? 'var(--coral-emergency)' : '#60A5FA',
+                          border: `1px solid ${isTier2Required ? 'var(--coral-emergency)' : 'rgba(59, 130, 246, 0.3)'}`,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        {isTier2Required ? '🚨 Tier-2 Medical Required' : '🚑 Tier-1 Transport Compatible'}
+                      </span>
+
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         ({new Date(inc.createdAt).toLocaleTimeString()})
                       </span>
@@ -553,6 +673,16 @@ export const ResponderPage = () => {
           </div>
         )}
       </div>
+
+      {/* Tier-2 Medical Certification Assessment Modal */}
+      <ResponderQuizModal
+        isOpen={quizModalOpen}
+        onClose={() => setQuizModalOpen(false)}
+        onCertified={(updatedProfile) => {
+          setProfile(updatedProfile);
+          loadResponderData();
+        }}
+      />
     </div>
   );
 };

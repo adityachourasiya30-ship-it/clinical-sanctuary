@@ -6,6 +6,8 @@ import {
   acceptIncident,
   updateStatus,
   getIncidentMedicalSummary,
+  verifyTier2,
+  setResponderTier,
 } from '../controllers/responderController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -21,5 +23,7 @@ router.get('/incidents', getAvailableIncidents);
 router.post('/incidents/:id/accept', acceptIncident);
 router.post('/incidents/:id/status', updateStatus);
 router.get('/incidents/:id/medical', getIncidentMedicalSummary);
+router.post('/verify-tier2', verifyTier2);
+router.post('/tier', setResponderTier);
 
 export default router;

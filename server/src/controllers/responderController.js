@@ -123,6 +123,29 @@ export const acceptIncident = async (req, res) => {
       });
     }
 
+    // Two-Tier Triage Gate: Verify Responder Tier against Incident Requirement
+    const responderProfile = await ResponderProfile.findOne({ userId: responderId });
+    const responderTier = responderProfile?.responderTier || 'TIER_1_TRANSPORT';
+
+    const targetIncident = await EmergencyIncident.findById(id);
+    if (!targetIncident) {
+      return res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+
+    if (['RESOLVED', 'CANCELLED'].includes(targetIncident.status)) {
+      return res.status(400).json({ success: false, message: `Cannot accept incident in ${targetIncident.status} state.` });
+    }
+
+    const requiresMedical = targetIncident.responderTier === 'TIER_2_MEDICAL' || targetIncident.urgency === 'CRITICAL';
+    if (requiresMedical && responderTier !== 'TIER_2_MEDICAL' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'This critical emergency requires Tier-2 Medical (CPR/First-Aid) certification. Please complete the verification assessment or dispatch to a certified paramedic.',
+        requiresTier: 'TIER_2_MEDICAL',
+        currentTier: responderTier,
+      });
+    }
+
     // Atomic findOneAndUpdate: Only match if assignedResponder is null or already this responder,
     // and status is unassigned/searching/active. Prevents two responders from claiming simultaneously.
     const incident = await EmergencyIncident.findOneAndUpdate(
@@ -312,6 +335,92 @@ export const getIncidentMedicalSummary = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch medical summary.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Verify or upgrade Responder to Tier 2 (Medical / CPR Certified) via Quiz or Demo Bypass
+ */
+export const verifyTier2 = async (req, res) => {
+  try {
+    const responderId = req.user._id;
+    const { score, total = 5, isDemoBypass = false } = req.body;
+
+    const passingScore = 4; // 80% of 5
+    const isPassed = isDemoBypass || (typeof score === 'number' && score >= passingScore);
+
+    if (!isPassed) {
+      return res.status(400).json({
+        success: false,
+        message: `Assessment score (${score || 0}/${total}) is below the 80% passing threshold (4/5 required). Please review emergency protocols and retry.`,
+        passed: false,
+        score: score || 0,
+      });
+    }
+
+    const profile = await ResponderProfile.findOneAndUpdate(
+      { userId: responderId },
+      {
+        $set: {
+          responderTier: 'TIER_2_MEDICAL',
+          tier2CertifiedAt: new Date(),
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Congratulations! You are officially verified as Tier-2 Medical Responder (CPR/ALS Certified).',
+      passed: true,
+      profile,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify Tier-2 status.',
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Switch Responder Tier (for demo/testing between TIER_1_TRANSPORT and TIER_2_MEDICAL)
+ */
+export const setResponderTier = async (req, res) => {
+  try {
+    const responderId = req.user._id;
+    const { tier } = req.body;
+
+    if (!['TIER_1_TRANSPORT', 'TIER_2_MEDICAL'].includes(tier)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid responder tier specified.',
+      });
+    }
+
+    const profile = await ResponderProfile.findOneAndUpdate(
+      { userId: responderId },
+      {
+        $set: {
+          responderTier: tier,
+          tier2CertifiedAt: tier === 'TIER_2_MEDICAL' ? new Date() : null,
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Responder tier set to ${tier}.`,
+      profile,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update responder tier.',
       error: err.message,
     });
   }

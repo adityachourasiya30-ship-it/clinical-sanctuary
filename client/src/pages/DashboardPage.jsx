@@ -60,6 +60,8 @@ export const DashboardPage = () => {
   const [voiceActive, setVoiceActive] = useState(false);
   const [notificationResults, setNotificationResults] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [showSecondaryTools, setShowSecondaryTools] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const trackingIntervalRef = useRef(null);
 
@@ -460,12 +462,125 @@ export const DashboardPage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Emergency SOS Control Card */}
           <div className="card-clean" style={{ textAlign: 'center' }}>
-            <IncidentCategorySelector
-              selectedCategory={selectedCategory}
-              onSelect={setSelectedCategory}
-              isEmergencyActive={isEmergencyActive}
-              onCategoryChangeWhileActive={handleCategoryChangeWhileActive}
-            />
+            {/* Minimalist Top Telemetry Pill */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.3rem 0.7rem',
+                  borderRadius: '999px',
+                  backgroundColor: location?.latitude ? 'rgba(5, 150, 105, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${location?.latitude ? 'var(--status-success)' : 'var(--coral-emergency)'}`,
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  color: location?.latitude ? '#059669' : '#E11D48',
+                }}
+              >
+                <MapPin size={13} />
+                {location?.latitude
+                  ? `GPS Fixed (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
+                  : 'Acquiring GPS Fix...'}
+              </div>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                <Users size={13} color="var(--teal-primary)" />
+                <span>{contactsCount} Contacts Linked</span>
+              </div>
+            </div>
+
+            {/* Two Simple Panic-Proof Triage Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('MEDICAL')}
+                style={{
+                  flex: 1,
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: selectedCategory === 'MEDICAL' ? 'rgba(225, 29, 72, 0.15)' : 'var(--surface-elevated)',
+                  border: `2px solid ${selectedCategory === 'MEDICAL' ? '#E11D48' : 'var(--border-subtle)'}`,
+                  color: selectedCategory === 'MEDICAL' ? '#FFFFFF' : 'var(--text-secondary)',
+                  fontWeight: '800',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>🚨</span>
+                <span>Critical Medical (ALS)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('GENERAL')}
+                style={{
+                  flex: 1,
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: selectedCategory === 'GENERAL' ? 'rgba(59, 130, 246, 0.15)' : 'var(--surface-elevated)',
+                  border: `2px solid ${selectedCategory === 'GENERAL' ? '#3B82F6' : 'var(--border-subtle)'}`,
+                  color: selectedCategory === 'GENERAL' ? '#FFFFFF' : 'var(--text-secondary)',
+                  fontWeight: '800',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>🚑</span>
+                <span>Hospital Drop (Transport)</span>
+              </button>
+            </div>
+
+            {/* Optional toggle for specific emergency types */}
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowAllCategories(!showAllCategories)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--teal-primary)',
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {showAllCategories ? '▲ Hide Extra Categories' : '▼ More Categories (Fire, Police, Accident)'}
+              </button>
+            </div>
+
+            {showAllCategories && (
+              <div style={{ marginBottom: '1rem' }}>
+                <IncidentCategorySelector
+                  selectedCategory={selectedCategory}
+                  onSelect={setSelectedCategory}
+                  isEmergencyActive={isEmergencyActive}
+                  onCategoryChangeWhileActive={handleCategoryChangeWhileActive}
+                />
+              </div>
+            )}
 
             <SOSButton
               onTrigger={() => handleTriggerSOS('MANUAL')}
@@ -547,105 +662,132 @@ export const DashboardPage = () => {
             assignedResponder={activeIncident?.assignedResponder}
           />
 
-          {/* Audio Evidence Voice Recorder Card */}
-          <div className="card-clean">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Mic size={18} color="var(--teal-primary)" />
-                <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main)' }}>
-                  Emergency Voice Audio Notes
-                </h4>
-              </div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Max 25 MB &bull; Consent Protected
-              </span>
-            </div>
+          {/* Subtle Collapsible Drawer for Advanced Utilities (Keeps Idle View Clean & Panic-Proof) */}
+          <div style={{ textAlign: 'center', margin: '0.25rem 0' }}>
+            <button
+              type="button"
+              onClick={() => setShowSecondaryTools(!showSecondaryTools)}
+              style={{
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.45rem 0.95rem',
+                fontSize: '0.76rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              {showSecondaryTools ? '▲ Hide Advanced Tools' : '▼ Show Voice Notes & Contacts Overview'}
+            </button>
+          </div>
 
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
-              Record a brief audio message describing injuries or hazards. Audio will be securely attached to your incident timeline for authorized responders.
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              {!isRecording ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!medicalProfile?.voiceConsentGranted) {
-                      setVoiceConsentModalOpen(true);
-                    } else {
-                      startRecording();
-                    }
-                  }}
-                  className="btn-teal"
-                  style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
-                >
-                  <Mic size={14} />
-                  Start Audio Recording
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={stopRecording}
-                  className="btn-coral"
-                  style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
-                >
-                  <StopCircle size={14} />
-                  Stop Recording ({audioDuration}s)
-                </button>
-              )}
-
-              {audioBlob && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <audio
-                    controls
-                    src={URL.createObjectURL(audioBlob)}
-                    style={{ height: '32px', maxWidth: '200px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={clearRecording}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                    title="Discard audio"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+          {showSecondaryTools && (
+            <>
+              {/* Audio Evidence Voice Recorder Card */}
+              <div className="card-clean">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mic size={18} color="var(--teal-primary)" />
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                      Emergency Voice Audio Notes
+                    </h4>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    Max 25 MB &bull; Consent Protected
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Quick Metrics & Overview */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <Link to="/contacts" className="card-clean" style={{ display: 'block' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                  EMERGENCY CONTACTS
-                </span>
-                <Users size={16} color="var(--teal-primary)" />
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
-                {contactsCount} Saved
-              </div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--teal-primary)', fontWeight: '600' }}>
-                Manage priority list &rarr;
-              </span>
-            </Link>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
+                  Record a brief audio message describing injuries or hazards. Audio will be securely attached to your incident timeline for authorized responders.
+                </p>
 
-            <Link to="/medical-profile" className="card-clean" style={{ display: 'block' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                  PATIENT MEDICAL CARD
-                </span>
-                <Heart size={16} color="var(--coral-emergency)" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  {!isRecording ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!medicalProfile?.voiceConsentGranted) {
+                          setVoiceConsentModalOpen(true);
+                        } else {
+                          startRecording();
+                        }
+                      }}
+                      className="btn-teal"
+                      style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
+                    >
+                      <Mic size={14} />
+                      Start Audio Recording
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={stopRecording}
+                      className="btn-coral"
+                      style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}
+                    >
+                      <StopCircle size={14} />
+                      Stop Recording ({audioDuration}s)
+                    </button>
+                  )}
+
+                  {audioBlob && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <audio
+                        controls
+                        src={URL.createObjectURL(audioBlob)}
+                        style={{ height: '32px', maxWidth: '200px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={clearRecording}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                        title="Discard audio"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
-                {medicalProfile?.bloodGroup || 'Unknown'}
+
+              {/* Quick Metrics & Overview */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <Link to="/contacts" className="card-clean" style={{ display: 'block' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                      EMERGENCY CONTACTS
+                    </span>
+                    <Users size={16} color="var(--teal-primary)" />
+                  </div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {contactsCount} Saved
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--teal-primary)', fontWeight: '600' }}>
+                    Manage priority list &rarr;
+                  </span>
+                </Link>
+
+                <Link to="/medical-profile" className="card-clean" style={{ display: 'block' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                      PATIENT MEDICAL CARD
+                    </span>
+                    <Heart size={16} color="var(--coral-emergency)" />
+                  </div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                    {medicalProfile?.bloodGroup || 'Unknown'}
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--coral-emergency)', fontWeight: '600' }}>
+                    {medicalProfile?.shareWithResponders ? 'Shared with Responders' : 'Private Mode'} &rarr;
+                  </span>
+                </Link>
               </div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--coral-emergency)', fontWeight: '600' }}>
-                {medicalProfile?.shareWithResponders ? 'Shared with Responders' : 'Private Mode'} &rarr;
-              </span>
-            </Link>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Right Column: Live Map & Nearby Facilities */}
