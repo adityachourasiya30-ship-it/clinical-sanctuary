@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useGeolocation } from '../hooks/useGeolocation';
+import usePolling from '../hooks/usePolling';
 import {
   Ambulance,
   ShieldCheck,
@@ -29,6 +30,7 @@ export const ResponderPage = () => {
   const [statusActionLoading, setStatusActionLoading] = useState(false);
   const [dutyLoading, setDutyLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [enteredOtp, setEnteredOtp] = useState('');
 
   // Fetch responder profile and available incidents
   const loadResponderData = async () => {
@@ -68,6 +70,38 @@ export const ResponderPage = () => {
   useEffect(() => {
     loadResponderData();
   }, [user]);
+
+  // 3-second Smart HTTP Polling for incoming emergency dispatch requests
+  usePolling(
+    async ({ signal }) => {
+      try {
+        const incRes = await api.get('/responder/incidents', { signal });
+        if (incRes.data.success) {
+          const list = incRes.data.incidents || [];
+          setIncidents(list);
+
+          const currentUserId = user?.id || user?._id;
+          const assigned = list.find(
+            (inc) =>
+              (inc.assignedResponder?._id === currentUserId ||
+                inc.assignedResponder === currentUserId) &&
+              !['RESOLVED', 'CANCELLED'].includes(inc.status)
+          );
+
+          if (assigned) {
+            setActiveIncident(assigned);
+          } else if (activeIncident && ['RESOLVED', 'CANCELLED'].includes(activeIncident.status)) {
+            setActiveIncident(null);
+            setMedicalSummary(null);
+          }
+        }
+      } catch (err) {
+        // Silently handled by usePolling
+      }
+    },
+    3000,
+    Boolean(user)
+  );
 
   const fetchMedicalSummary = async (incidentId) => {
     try {
@@ -121,16 +155,23 @@ export const ResponderPage = () => {
   };
 
   // Update status (EN_ROUTE, ARRIVED, RESOLVED)
-  const handleUpdateStatus = async (status) => {
+  const handleUpdateStatus = async (status, otpOverride = null) => {
     if (!activeIncident) return;
     setStatusActionLoading(true);
     try {
       const incidentId = activeIncident.id || activeIncident._id;
-      const res = await api.post(`/responder/incidents/${incidentId}/status`, { status });
+      const payload = { status };
+      const pinToSend = otpOverride || enteredOtp;
+      if (pinToSend && pinToSend.trim().length > 0) {
+        payload.otp = pinToSend.trim();
+      }
+
+      const res = await api.post(`/responder/incidents/${incidentId}/status`, payload);
       if (res.data.success) {
         if (status === 'RESOLVED') {
           setActiveIncident(null);
           setMedicalSummary(null);
+          setEnteredOtp('');
           setMessage('Emergency response concluded and resolved.');
         } else {
           setActiveIncident(res.data.incident);
@@ -337,6 +378,44 @@ export const ResponderPage = () => {
               >
                 Mark ARRIVED on Scene
               </button>
+            )}
+
+            {activeIncident.status === 'ARRIVED' && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.4rem 0.75rem',
+                  backgroundColor: 'var(--surface-primary)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <ShieldCheck size={16} color="var(--teal-primary)" />
+                <span style={{ fontSize: '0.74rem', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                  Patient PIN:
+                </span>
+                <input
+                  type="text"
+                  maxLength={4}
+                  placeholder="4-digit OTP"
+                  value={enteredOtp}
+                  onChange={(e) => setEnteredOtp(e.target.value)}
+                  style={{
+                    width: '85px',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: 'var(--radius-xs)',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--surface-elevated)',
+                    color: '#FFFFFF',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.85rem',
+                    textAlign: 'center',
+                    letterSpacing: '0.1em',
+                  }}
+                />
+              </div>
             )}
 
             {['ASSIGNED', 'EN_ROUTE', 'ARRIVED'].includes(activeIncident.status) && (

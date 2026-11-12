@@ -23,6 +23,7 @@ const emergencyIncidentSchema = new mongoose.Schema(
       type: String,
       enum: [
         'CREATED',
+        'SEARCHING',
         'LOCATION_PENDING',
         'SUBMITTED',
         'ACTIVE',
@@ -39,13 +40,22 @@ const emergencyIncidentSchema = new mongoose.Schema(
         'CANCELLED',
         'FAILED',
       ],
-      default: 'CREATED',
+      default: 'SEARCHING',
       index: true,
     },
     urgency: {
       type: String,
       enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
       default: 'HIGH',
+    },
+    responderTier: {
+      type: String,
+      enum: ['TIER_1_TRANSPORT', 'TIER_2_MEDICAL'],
+      default: 'TIER_2_MEDICAL',
+    },
+    pickupOtp: {
+      type: String,
+      default: null,
     },
     assignedResponder: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import usePolling from '../hooks/usePolling';
 import { EmergencyMap } from '../components/EmergencyMap';
 import { ResponsePipeline } from '../components/ResponsePipeline';
 import {
@@ -26,57 +27,44 @@ export const TrackIncidentPage = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [hospitals, setHospitals] = useState([]);
 
-  const pollIntervalRef = useRef(null);
+  const isPollingEnabled = !['RESOLVED', 'CANCELLED'].includes(data?.status);
 
-  const fetchTrackingData = async (isPoll = false) => {
-    try {
-      if (!isPoll) setLoading(true);
-      const res = await api.get(`/incidents/track/${incidentCode}`);
+  // 3-second smart HTTP polling with AbortController & visibility detection
+  usePolling(
+    async ({ signal }) => {
+      try {
+        const res = await api.get(`/incidents/track/${incidentCode}`, { signal });
 
-      if (res.data.success) {
-        const incidentInfo = res.data.incident;
-        setData(incidentInfo);
-        setLastUpdated(new Date());
+        if (res.data.success) {
+          const incidentInfo = res.data.incident;
+          setData(incidentInfo);
+          setLastUpdated(new Date());
 
-        const loc = incidentInfo.latestLocation || incidentInfo.initialLocation;
-        if (loc?.latitude && loc?.longitude && hospitals.length === 0) {
-          try {
-            const hospRes = await api.get(
-              `/hospitals/nearby?lat=${loc.latitude}&lng=${loc.longitude}&radius=6000`
-            );
-            if (hospRes.data.success) {
-              setHospitals(hospRes.data.hospitals || []);
-            }
-          } catch (e) {
-            // Non-blocking
+          const loc = incidentInfo.latestLocation || incidentInfo.initialLocation;
+          if (loc?.latitude && loc?.longitude && hospitals.length === 0) {
+            try {
+              const hospRes = await api.get(
+                `/hospitals/nearby?lat=${loc.latitude}&lng=${loc.longitude}&radius=6000`,
+                { signal }
+              );
+              if (hospRes.data.success) {
+                setHospitals(hospRes.data.hospitals || []);
+              }
+            } catch (_) {}
           }
         }
+      } catch (err) {
+        if (err?.code !== 'ERR_CANCELED' && err?.name !== 'AbortError') {
+          setError(err.response?.data?.message || 'Emergency incident not found.');
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Emergency incident not found.');
-    } finally {
-      if (!isPoll) setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrackingData();
-
-    // 5-second polling interval while emergency is active
-    pollIntervalRef.current = setInterval(() => {
-      fetchTrackingData(true);
-    }, 5000);
-
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, [incidentCode]);
-
-  useEffect(() => {
-    if (['RESOLVED', 'CANCELLED'].includes(data?.status) && pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-    }
-  }, [data?.status]);
+    },
+    3000,
+    isPollingEnabled,
+    [incidentCode, hospitals.length]
+  );
 
   if (loading) {
     return (

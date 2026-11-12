@@ -31,6 +31,15 @@ const responderProfileSchema = new mongoose.Schema(
       enum: ['AMBULANCE', 'PARAMEDIC_BIKE', 'FIRE_TRUCK', 'PATROL_CAR', 'FIRST_RESPONDER_CAR', 'ON_FOOT'],
       default: 'AMBULANCE',
     },
+    responderTier: {
+      type: String,
+      enum: ['TIER_1_TRANSPORT', 'TIER_2_MEDICAL'],
+      default: 'TIER_2_MEDICAL',
+    },
+    tier2CertifiedAt: {
+      type: Date,
+      default: null,
+    },
     phone: {
       type: String,
       trim: true,

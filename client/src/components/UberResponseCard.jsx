@@ -27,7 +27,7 @@ export const UberResponseCard = ({
     return null;
   }
 
-  const isSearching = ['CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'].includes(incident.status);
+  const isSearching = ['SEARCHING', 'CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'].includes(incident.status);
   const isAssigned = incident.status === 'ASSIGNED';
   const isEnRoute = incident.status === 'EN_ROUTE';
   const isArrived = incident.status === 'ARRIVED';
@@ -113,28 +113,78 @@ export const UberResponseCard = ({
           </div>
         </div>
 
-        {/* Live ETA Box */}
-        {(isEnRoute || isAssigned) && (
-          <div
-            style={{
-              backgroundColor: 'var(--surface-elevated)',
-              border: '1px solid var(--teal-primary)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '0.4rem 0.8rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <Clock size={16} color="var(--teal-primary)" />
-            <div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Estimated Arrival</div>
-              <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--teal-primary)' }}>
-                {responder?.eta || '3 mins'} ({responder?.distance || '850m away'})
+        {/* Status Badges: ETA & Pickup OTP */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {/* Pickup OTP Box */}
+          {incident.pickupOtp && (
+            <div
+              style={{
+                backgroundColor: 'rgba(25, 182, 164, 0.12)',
+                border: '1px solid var(--teal-primary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.35rem 0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+              }}
+              title="Share this 4-digit code with the Paramedic upon arrival to verify response"
+            >
+              <ShieldCheck size={16} color="var(--teal-primary)" />
+              <div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Pickup OTP
+                </div>
+                <div style={{ fontSize: '0.98rem', fontWeight: '900', color: '#FFFFFF', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+                  {incident.pickupOtp}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Live ETA Box */}
+          {(isEnRoute || isAssigned) && (
+            <div
+              style={{
+                backgroundColor: 'var(--surface-elevated)',
+                border: '1px solid var(--teal-primary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.35rem 0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              <Clock size={16} color="var(--teal-primary)" />
+              <div>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Estimated Arrival</div>
+                <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--teal-primary)' }}>
+                  {responder?.eta || '3 mins'} ({responder?.distance || '850m away'})
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tier Badge */}
+          {incident.responderTier && (
+            <div
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: '700',
+                padding: '0.3rem 0.6rem',
+                borderRadius: '999px',
+                backgroundColor: incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(25, 182, 164, 0.15)',
+                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#60A5FA' : 'var(--teal-primary)',
+                border: `1px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.3)' : 'var(--teal-border)'}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+              }}
+            >
+              <Sparkles size={11} />
+              {incident.responderTier === 'TIER_1_TRANSPORT' ? 'Tier 1: Transport' : 'Tier 2: Medical ALS'}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Progress Dots: Uber-style route timeline */}

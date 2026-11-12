@@ -80,7 +80,7 @@ export const updateAvailability = async (req, res) => {
 export const getAvailableIncidents = async (req, res) => {
   try {
     const incidents = await EmergencyIncident.find({
-      status: { $in: ['CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED', 'ASSIGNED', 'EN_ROUTE'] },
+      status: { $in: ['SEARCHING', 'CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED', 'ASSIGNED', 'EN_ROUTE', 'ARRIVED'] },
     })
       .sort({ createdAt: -1 })
       .populate('userId', 'name phone')
@@ -101,38 +101,59 @@ export const getAvailableIncidents = async (req, res) => {
 };
 
 /**
- * Accept an emergency incident
+ * Accept an emergency incident (Atomic MongoDB lock to avoid race conditions)
  */
 export const acceptIncident = async (req, res) => {
   try {
     const { id } = req.params;
     const responderId = req.user._id;
 
-    const incident = await EmergencyIncident.findById(id);
-    if (!incident) {
-      return res.status(404).json({
-        success: false,
-        message: 'Incident not found.',
-      });
-    }
+    // Check if responder already has another active assigned incident
+    const existingActiveAssignment = await EmergencyIncident.findOne({
+      assignedResponder: responderId,
+      status: { $in: ['ASSIGNED', 'EN_ROUTE', 'ARRIVED'] },
+      _id: { $ne: id },
+    });
 
-    if (['RESOLVED', 'CANCELLED'].includes(incident.status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot accept an incident in ${incident.status} state.`,
-      });
-    }
-
-    if (incident.assignedResponder && !incident.assignedResponder.equals(responderId)) {
+    if (existingActiveAssignment) {
       return res.status(409).json({
         success: false,
-        message: 'This incident is already assigned to another responder.',
+        message: `You already have an active emergency incident (${existingActiveAssignment.incidentCode}) in progress. Please conclude it first.`,
+        activeIncidentCode: existingActiveAssignment.incidentCode,
       });
     }
 
-    incident.assignedResponder = responderId;
-    incident.status = 'ASSIGNED';
-    await incident.save();
+    // Atomic findOneAndUpdate: Only match if assignedResponder is null or already this responder,
+    // and status is unassigned/searching/active. Prevents two responders from claiming simultaneously.
+    const incident = await EmergencyIncident.findOneAndUpdate(
+      {
+        _id: id,
+        status: { $in: ['CREATED', 'SUBMITTED', 'ACTIVE', 'SEARCHING', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'] },
+        $or: [{ assignedResponder: null }, { assignedResponder: responderId }],
+      },
+      {
+        $set: {
+          assignedResponder: responderId,
+          status: 'ASSIGNED',
+        },
+      },
+      { new: true }
+    );
+
+    if (!incident) {
+      // Check if incident was already taken or resolved
+      const existing = await EmergencyIncident.findById(id);
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'Incident not found.' });
+      }
+      if (['RESOLVED', 'CANCELLED'].includes(existing.status)) {
+        return res.status(400).json({ success: false, message: `Cannot accept incident in ${existing.status} state.` });
+      }
+      return res.status(409).json({
+        success: false,
+        message: 'This emergency call was just claimed by another responding paramedic unit.',
+      });
+    }
 
     // Upsert assignment record
     await IncidentAssignment.findOneAndUpdate(
@@ -150,8 +171,8 @@ export const acceptIncident = async (req, res) => {
       eventType: 'RESPONDER_ACCEPTED',
       actorId: responderId,
       actorRole: 'RESPONDER',
-      description: `Responder ${req.user.name} accepted the emergency dispatch.`,
-      metadata: { responderName: req.user.name },
+      description: `Responder ${req.user.name} accepted the emergency dispatch (Tier: ${incident.responderTier || 'TIER_2_MEDICAL'}).`,
+      metadata: { responderName: req.user.name, responderTier: incident.responderTier },
     });
 
     return res.status(200).json({
@@ -174,7 +195,7 @@ export const acceptIncident = async (req, res) => {
 export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, otp } = req.body;
     const responderId = req.user._id;
 
     const allowedTransitions = ['EN_ROUTE', 'ARRIVED', 'RESOLVED'];
@@ -201,6 +222,18 @@ export const updateStatus = async (req, res) => {
       });
     }
 
+    // Optional Pickup OTP verification when reaching ARRIVED or RESOLVED
+    let otpVerified = false;
+    if (otp && incident.pickupOtp) {
+      if (incident.pickupOtp.toString().trim() !== otp.toString().trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid 4-digit pickup OTP. Please verify with the patient.',
+        });
+      }
+      otpVerified = true;
+    }
+
     const previousStatus = incident.status;
     incident.status = status;
 
@@ -225,8 +258,8 @@ export const updateStatus = async (req, res) => {
       eventType: `RESPONDER_${status}`,
       actorId: responderId,
       actorRole: 'RESPONDER',
-      description: `Responder ${req.user.name} changed status from ${previousStatus} to ${status}.${notes ? ` Notes: ${notes}` : ''}`,
-      metadata: { previousStatus, newStatus: status, notes },
+      description: `Responder ${req.user.name} changed status from ${previousStatus} to ${status}.${notes ? ` Notes: ${notes}` : ''}${otpVerified ? ' (Pickup OTP Verified)' : ''}`,
+      metadata: { previousStatus, newStatus: status, notes, otpVerified },
     });
 
     return res.status(200).json({

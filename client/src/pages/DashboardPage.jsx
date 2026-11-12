@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import usePolling from '../hooks/usePolling';
 import { SOSButton } from '../components/SOSButton';
 import { IncidentCategorySelector } from '../components/IncidentCategorySelector';
 import { ResponsePipeline } from '../components/ResponsePipeline';
@@ -113,6 +114,40 @@ export const DashboardPage = () => {
       fetchHospitals();
     }
   }, [location?.latitude, location?.longitude]);
+
+  // 3-second Smart HTTP Polling to keep active incident status in sync with responding paramedic
+  const hasActiveIncident = Boolean(activeIncident && !['RESOLVED', 'CANCELLED'].includes(activeIncident.status));
+
+  usePolling(
+    async ({ signal }) => {
+      try {
+        const incId = activeIncident.incidentCode || activeIncident._id || activeIncident.id;
+        if (!incId) return;
+
+        const res = await api.get(`/incidents/track/${incId}`, { signal });
+        if (res.data.success && res.data.incident) {
+          const updated = res.data.incident;
+          if (['RESOLVED', 'CANCELLED'].includes(updated.status)) {
+            setActiveIncident(null);
+            setStatusMessage(`Emergency incident ${updated.incidentCode} has been marked RESOLVED.`);
+          } else {
+            setActiveIncident((prev) => ({
+              ...prev,
+              ...updated,
+              // Retain local client telemetry fields if missing
+              _id: updated._id || updated.id || prev?._id,
+              id: updated.id || updated._id || prev?.id,
+            }));
+          }
+        }
+      } catch (err) {
+        // Silently handled by usePolling
+      }
+    },
+    3000,
+    hasActiveIncident,
+    [activeIncident?.incidentCode, activeIncident?._id]
+  );
 
   // Voice SOS trigger callback
   const handleVoiceTrigger = useCallback(

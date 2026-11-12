@@ -63,13 +63,19 @@ export const triggerSOS = async (req, res) => {
     }
 
     const incidentCode = generateIncidentCode();
+    // 4-digit numeric verification OTP for patient-paramedic rendezvous
+    const pickupOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const isCritical = ['MEDICAL', 'ACCIDENT', 'ROAD_ACCIDENT', 'FIRE'].includes(category);
+    const responderTier = isCritical ? 'TIER_2_MEDICAL' : 'TIER_1_TRANSPORT';
 
     const incident = await EmergencyIncident.create({
       incidentCode,
       userId,
       category: category || 'GENERAL',
       triggerType: triggerType || 'MANUAL',
-      status: 'ACTIVE',
+      status: 'SEARCHING',
+      responderTier,
+      pickupOtp,
       initialLocation: {
         latitude: latitude || null,
         longitude: longitude || null,
@@ -121,7 +127,7 @@ export const triggerSOS = async (req, res) => {
 
     if (contacts.length === 0) {
       console.log('ℹ️ No emergency contacts configured for user. Alert logged to system.');
-      incident.status = 'ACTIVE';
+      incident.status = 'SEARCHING';
       await incident.save();
     } else {
       for (const contact of contacts) {
@@ -151,7 +157,7 @@ export const triggerSOS = async (req, res) => {
         }
       }
 
-      incident.status = hasFailure ? 'PARTIALLY_FAILED' : 'NOTIFIED';
+      incident.status = 'SEARCHING';
       await incident.save();
     }
 
@@ -163,6 +169,9 @@ export const triggerSOS = async (req, res) => {
         incidentCode: incident.incidentCode,
         category: incident.category,
         status: incident.status,
+        urgency: incident.urgency,
+        responderTier: incident.responderTier,
+        pickupOtp: incident.pickupOtp,
         triggerType: incident.triggerType,
         initialLocation: incident.initialLocation,
         createdAt: incident.createdAt,
@@ -407,10 +416,14 @@ export const getTrackIncident = async (req, res) => {
     return res.status(200).json({
       success: true,
       incident: {
+        id: incident._id,
+        _id: incident._id,
         incidentCode: incident.incidentCode,
         category: incident.category,
         status: incident.status,
         urgency: incident.urgency || 'HIGH',
+        responderTier: incident.responderTier || 'TIER_2_MEDICAL',
+        pickupOtp: incident.pickupOtp || null,
         createdAt: incident.createdAt,
         resolvedAt: incident.resolvedAt,
         cancelledAt: incident.cancelledAt,
@@ -694,7 +707,7 @@ export const simulateUberDispatchFlow = async (req, res) => {
     let nextStatus = 'ASSIGNED';
     let description = '';
 
-    if (['CREATED', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'].includes(incident.status)) {
+    if (['CREATED', 'SEARCHING', 'SUBMITTED', 'ACTIVE', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'].includes(incident.status)) {
       nextStatus = 'ASSIGNED';
       incident.assignedResponder = responder?._id || req.user._id;
       description = 'Ambulance Unit Matched: Officer Vikram Singh (ALS-104) has accepted the dispatch.';
