@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { MagicCard } from '../components/ui/MagicCard';
 import {
   ShieldAlert,
   Lock,
@@ -162,19 +163,23 @@ export const LoginPage = () => {
         backgroundColor: 'var(--bg-main)',
       }}
     >
-      <div
+      <MagicCard
         style={{
           maxWidth: '960px',
           width: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          backgroundColor: 'var(--surface-primary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-lg)',
         }}
+        borderRadius="var(--radius-lg)"
+        gradientColor="rgba(5, 150, 105, 0.14)"
+        spotlightBorderColor="rgba(5, 150, 105, 0.4)"
       >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            backgroundColor: 'var(--surface-primary)',
+            overflow: 'hidden',
+          }}
+        >
         {/* Left Hero Panel */}
         <div
           style={{
@@ -576,7 +581,8 @@ export const LoginPage = () => {
             <span>CRISIS HOTLINE: <a href="tel:112" style={{ color: 'white', fontWeight: '800', textDecoration: 'underline' }}>DIAL 112 (POLICE / AMBULANCE)</a></span>
           </div>
         </div>
-      </div>
+        </div>
+      </MagicCard>
     </div>
   );
 };

@@ -12,13 +12,16 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 import api from '../services/api';
+import { TelemetrySyncBeam } from './ui/AnimatedBeam';
 
 export const UberResponseCard = ({
   incident,
   onStatusUpdated,
   onCancelRequested,
+  isFloating = false,
 }) => {
   const [advancing, setAdvancing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -68,26 +71,35 @@ export const UberResponseCard = ({
 
   return (
     <div
-      className="card-clean"
+      className={isFloating ? '' : 'card-clean'}
       style={{
-        margin: '1.25rem 0',
-        border: '2px solid var(--teal-primary)',
-        boxShadow: '0 8px 30px rgba(25, 182, 164, 0.18)',
+        margin: isFloating ? '0' : '1.25rem 0',
+        backgroundColor: isFloating ? 'rgba(255, 255, 255, 0.95)' : 'var(--surface-primary, #FFFFFF)',
+        backdropFilter: isFloating ? 'blur(16px)' : undefined,
+        WebkitBackdropFilter: isFloating ? 'blur(16px)' : undefined,
+        border: isFloating ? '1.5px solid rgba(226, 232, 240, 0.9)' : '2px solid var(--teal-primary)',
+        borderRadius: isFloating ? '24px' : 'var(--radius-md, 16px)',
+        boxShadow: isFloating
+          ? '0 12px 40px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04)'
+          : '0 8px 30px rgba(25, 182, 164, 0.18)',
+        padding: isFloating ? '1.25rem 1.4rem' : '1.25rem',
         position: 'relative',
         overflow: 'hidden',
+        maxHeight: isFloating ? '80vh' : undefined,
+        overflowY: isFloating ? 'auto' : undefined,
       }}
     >
-      {/* Top Banner indicating Uber-style status */}
+      {/* Top Banner indicating Uber-style status & Badges */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.5rem',
+          gap: '0.65rem',
           paddingBottom: '0.85rem',
-          borderBottom: '1px solid var(--border-subtle)',
-          marginBottom: '1rem',
+          borderBottom: '1px solid var(--border-subtle, #E2E8F0)',
+          marginBottom: '0.85rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -96,45 +108,81 @@ export const UberResponseCard = ({
               width: '12px',
               height: '12px',
               borderRadius: '50%',
-              backgroundColor: isArrived ? 'var(--status-success)' : (isEnRoute ? 'var(--coral-emergency)' : 'var(--teal-primary)'),
+              backgroundColor: isArrived
+                ? 'var(--status-success, #059669)'
+                : isEnRoute
+                ? 'var(--coral-emergency, #E11D48)'
+                : 'var(--teal-primary, #059669)',
               animation: 'emergency-pulse 1.3s infinite',
             }}
           />
           <div>
-            <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              UBER-ASSISTANCE WORKFLOW
+            <div
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: '800',
+                color: 'var(--text-secondary, #475569)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              UBER-DISPATCH TELEMETRY
             </div>
-            <div style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
-              {isSearching && '🔍 Dispatching Nearest Paramedic Unit...'}
+            <div
+              style={{
+                fontSize: '1.05rem',
+                fontWeight: '900',
+                color: 'var(--text-main, #0F172A)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {isSearching && '🔍 Dispatching Nearest Certified Paramedic...'}
               {isAssigned && '✅ Paramedic Unit Matched & Assigned'}
               {isEnRoute && '🚑 Emergency Unit En Route (Sirens Active)'}
-              {isArrived && '📍 Unit Arrived On Scene (Medical Triage Active)'}
+              {isArrived && '📍 Paramedic Arrived On Scene'}
             </div>
           </div>
         </div>
 
-        {/* Status Badges: ETA & Pickup OTP */}
+        {/* Status Badges: Pickup OTP & Live ETA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Pickup OTP Box */}
+          {/* Pickup OTP Box with JetBrains Mono font */}
           {incident.pickupOtp && (
             <div
               style={{
                 backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                border: '1.5px solid var(--teal-primary)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.35rem 0.75rem',
+                border: '1.5px solid var(--teal-primary, #059669)',
+                borderRadius: '12px',
+                padding: '0.35rem 0.8rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
               }}
               title="Share this 4-digit code with the Paramedic upon arrival to verify response"
             >
-              <ShieldCheck size={16} color="var(--teal-primary)" />
+              <ShieldCheck size={16} color="var(--teal-primary, #059669)" />
               <div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>
+                <div
+                  style={{
+                    fontSize: '0.62rem',
+                    color: '#64748B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    fontWeight: '800',
+                  }}
+                >
                   Pickup OTP
                 </div>
-                <div style={{ fontSize: '0.98rem', fontWeight: '900', color: '#059669', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)' }}>
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: '900',
+                    color: '#059669',
+                    letterSpacing: '0.12em',
+                    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                    lineHeight: 1.1,
+                  }}
+                >
                   {incident.pickupOtp}
                 </div>
               </div>
@@ -145,20 +193,20 @@ export const UberResponseCard = ({
           {(isEnRoute || isAssigned) && (
             <div
               style={{
-                backgroundColor: 'var(--surface-elevated)',
-                border: '1px solid var(--teal-primary)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.35rem 0.75rem',
+                backgroundColor: '#F8FAFC',
+                border: '1.5px solid var(--teal-primary, #059669)',
+                borderRadius: '12px',
+                padding: '0.35rem 0.8rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
+                gap: '0.45rem',
               }}
             >
-              <Clock size={16} color="var(--teal-primary)" />
+              <Clock size={16} color="var(--teal-primary, #059669)" />
               <div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Estimated Arrival</div>
-                <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--teal-primary)' }}>
-                  {responder?.eta || '3 mins'} ({responder?.distance || '850m away'})
+                <div style={{ fontSize: '0.62rem', color: '#64748B', fontWeight: '700' }}>Estimated Arrival</div>
+                <div style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--teal-primary, #059669)', lineHeight: 1.1 }}>
+                  {responder?.eta || '3 mins'} &bull; {responder?.distance || '850m away'}
                 </div>
               </div>
             </div>
@@ -168,112 +216,68 @@ export const UberResponseCard = ({
           {incident.responderTier && (
             <div
               style={{
-                fontSize: '0.7rem',
-                fontWeight: '700',
-                padding: '0.3rem 0.6rem',
+                fontSize: '0.72rem',
+                fontWeight: '800',
+                padding: '0.35rem 0.75rem',
                 borderRadius: '999px',
-                backgroundColor: incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(25, 182, 164, 0.15)',
-                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#60A5FA' : 'var(--teal-primary)',
-                border: `1px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.3)' : 'var(--teal-border)'}`,
+                backgroundColor:
+                  incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(5, 150, 105, 0.15)',
+                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#2563EB' : '#059669',
+                border: `1.5px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(5, 150, 105, 0.35)'}`,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.3rem',
+                gap: '0.35rem',
               }}
             >
-              <Sparkles size={11} />
+              <Sparkles size={12} />
               {incident.responderTier === 'TIER_1_TRANSPORT' ? 'Tier 1: Transport' : 'Tier 2: Medical ALS'}
             </div>
           )}
         </div>
       </div>
 
-      {/* Progress Dots: Uber-style route timeline */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0.75rem 0 1.25rem 0', position: 'relative' }}>
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '5%',
-            right: '5%',
-            height: '3px',
-            backgroundColor: 'var(--surface-elevated)',
-            zIndex: 1,
-            transform: 'translateY(-50%)',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              backgroundColor: 'var(--teal-primary)',
-              width: isSearching ? '25%' : (isAssigned ? '50%' : (isEnRoute ? '75%' : '100%')),
-              transition: 'width 0.4s ease',
-            }}
-          />
-        </div>
-
-        {[
-          { label: 'Dispatched', active: true },
-          { label: 'Matched', active: isAssigned || isEnRoute || isArrived },
-          { label: 'En Route', active: isEnRoute || isArrived },
-          { label: 'Arrived', active: isArrived },
-        ].map((step, idx) => (
-          <div key={idx} style={{ zIndex: 2, textAlign: 'center', backgroundColor: 'var(--surface-primary)', padding: '0 4px' }}>
-            <div
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                backgroundColor: step.active ? 'var(--teal-primary)' : 'var(--surface-elevated)',
-                border: step.active ? '2px solid #FFFFFF' : '2px solid var(--border-subtle)',
-                color: step.active ? '#071A12' : 'var(--text-muted)',
-                fontSize: '0.7rem',
-                fontWeight: '800',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 4px auto',
-              }}
-            >
-              {idx + 1}
-            </div>
-            <span style={{ fontSize: '0.68rem', fontWeight: step.active ? '700' : '500', color: step.active ? 'var(--text-main)' : 'var(--text-muted)' }}>
-              {step.label}
-            </span>
-          </div>
-        ))}
+      {/* Magic UI AnimatedBeam: [Citizen GPS] ➔ [Live Dispatch] ➔ [Responder Unit] */}
+      <div style={{ margin: '0.75rem 0 1rem 0' }}>
+        <TelemetrySyncBeam
+          status={incident.status}
+          responderName={responder?.name}
+          responderTier={incident.responderTier}
+          eta={responder?.eta || '3 mins'}
+          distance={responder?.distance || '0.8 km'}
+        />
       </div>
 
-      {/* If Searching, show animated Radar Ping & Subtle Solo Demo Match Button */}
+      {/* If Searching, show radar ping & subtle Demo Match Button */}
       {isSearching && (
         <div
           style={{
             padding: '1.25rem',
-            backgroundColor: 'var(--surface-elevated)',
-            borderRadius: 'var(--radius-sm)',
-            border: '1.5px dashed var(--teal-primary)',
+            backgroundColor: '#F8FAFC',
+            borderRadius: '16px',
+            border: '1.5px dashed var(--teal-primary, #059669)',
             textAlign: 'center',
             marginBottom: '1rem',
           }}
         >
           <div
             style={{
-              width: '50px',
-              height: '50px',
+              width: '46px',
+              height: '46px',
               borderRadius: '50%',
               backgroundColor: 'rgba(5, 150, 105, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 0.75rem auto',
+              margin: '0 auto 0.5rem auto',
               animation: 'emergency-pulse 1.5s infinite',
             }}
           >
-            <Radio size={26} color="var(--teal-primary)" />
+            <Radio size={24} color="var(--teal-primary, #059669)" />
           </div>
-          <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+          <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main, #0F172A)', marginBottom: '0.2rem' }}>
             Broadcasting to Nearest Emergency Fleets
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto 0.85rem auto', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '0.78rem', color: '#64748B', maxWidth: '400px', margin: '0 auto 0.75rem auto', lineHeight: 1.4 }}>
             Locating certified paramedic units and ALS ambulances within Gwalior emergency corridor...
           </div>
 
@@ -308,47 +312,47 @@ export const UberResponseCard = ({
       {(isAssigned || isEnRoute || isArrived) && responder && (
         <div
           style={{
-            backgroundColor: 'var(--surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '1rem',
-            marginBottom: '1rem',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid var(--border-subtle, #E2E8F0)',
+            borderRadius: '16px',
+            padding: '0.9rem 1.15rem',
+            marginBottom: '0.85rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '1rem',
+            gap: '0.75rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div
               style={{
-                width: '50px',
-                height: '50px',
+                width: '48px',
+                height: '48px',
                 borderRadius: '50%',
                 backgroundColor: 'rgba(5, 150, 105, 0.15)',
-                border: '2px solid var(--teal-primary)',
+                border: '2px solid var(--teal-primary, #059669)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Ambulance size={26} color="var(--teal-primary)" />
+              <Ambulance size={24} color="var(--teal-primary, #059669)" />
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                <span style={{ fontSize: '0.96rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
                   {responder.name || 'Officer Vikram Singh'}
                 </span>
                 <span title="Verified Emergency Responder" style={{ display: 'flex' }}>
-                  <ShieldCheck size={16} color="var(--teal-primary)" />
+                  <ShieldCheck size={16} color="var(--teal-primary, #059669)" />
                 </span>
               </div>
-              <div style={{ fontSize: '0.76rem', color: 'var(--teal-primary)', fontWeight: '600' }}>
+              <div style={{ fontSize: '0.76rem', color: 'var(--teal-primary, #059669)', fontWeight: '700' }}>
                 {responder.vehicle || 'ALS Ambulance (DL-01-EM-402)'} &bull; {responder.badgeNumber || 'EMS-042'}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
                 {responder.rating || 'Verified Medical Service • Immediate Priority Clearance'}
               </div>
             </div>
@@ -371,7 +375,7 @@ export const UberResponseCard = ({
               className="btn-secondary"
               style={{ fontSize: '0.78rem', padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              {copied ? <CheckCircle size={14} color="var(--status-success)" /> : <Share2 size={14} />}
+              {copied ? <CheckCircle size={14} color="var(--status-success, #059669)" /> : <Share2 size={14} />}
               {copied ? 'Link Copied!' : 'Share Live GPS'}
             </button>
           </div>
@@ -387,7 +391,7 @@ export const UberResponseCard = ({
           flexWrap: 'wrap',
           gap: '0.65rem',
           paddingTop: '0.65rem',
-          borderTop: '1px solid var(--border-subtle)',
+          borderTop: '1px solid var(--border-subtle, #E2E8F0)',
         }}
       >
         <button
@@ -395,13 +399,13 @@ export const UberResponseCard = ({
           onClick={handleSimulateNextStep}
           disabled={advancing}
           style={{
-            backgroundColor: 'var(--teal-subtle)',
-            color: 'var(--teal-primary)',
-            border: '1px solid var(--teal-border)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.5rem 0.85rem',
+            backgroundColor: 'var(--teal-subtle, rgba(5, 150, 105, 0.1))',
+            color: 'var(--teal-primary, #059669)',
+            border: '1px solid var(--teal-border, rgba(5, 150, 105, 0.25))',
+            borderRadius: '8px',
+            padding: '0.45rem 0.85rem',
             fontSize: '0.76rem',
-            fontWeight: '700',
+            fontWeight: '800',
             cursor: advancing ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -410,7 +414,7 @@ export const UberResponseCard = ({
           }}
           title="Advances the Uber lifecycle for testing without needing a second device"
         >
-          <Zap size={14} color="var(--teal-primary)" />
+          <Zap size={14} color="var(--teal-primary, #059669)" />
           {advancing ? 'Updating Fleet Dispatch...' : (
             isSearching ? '⚡ Simulate Responder Match (Demo)' : (
               isAssigned ? '⚡ Start Driving (Switch to EN_ROUTE)' : (
@@ -420,10 +424,12 @@ export const UberResponseCard = ({
           )}
         </button>
 
-        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-          Incident Code: <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{incident.incidentCode}</strong>
+        <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+          Incident Code: <strong style={{ color: 'var(--text-main, #0F172A)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>{incident.incidentCode}</strong>
         </span>
       </div>
     </div>
   );
 };
+
+export default UberResponseCard;

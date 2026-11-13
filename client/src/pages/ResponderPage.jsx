@@ -6,6 +6,7 @@ import usePolling from '../hooks/usePolling';
 import { ResponderQuizModal } from '../components/ResponderQuizModal';
 import { CPRMetronomeChecklist } from '../components/CPRMetronomeChecklist';
 import { RescueCertificateModal } from '../components/RescueCertificateModal';
+import { MagicCard } from '../components/ui/MagicCard';
 import {
   Ambulance,
   ShieldCheck,
@@ -811,94 +812,100 @@ export const ResponderPage = () => {
                   const isTier2Required = inc.responderTier === 'TIER_2_MEDICAL' || inc.urgency === 'CRITICAL';
 
                   return (
-                    <div
+                    <MagicCard
                       key={inc._id}
-                      style={{
-                        backgroundColor: 'var(--surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '0.75rem',
-                      }}
+                      gradientColor={isTier2Required ? 'rgba(225, 29, 72, 0.12)' : 'rgba(5, 150, 105, 0.12)'}
+                      spotlightBorderColor={isTier2Required ? 'rgba(225, 29, 72, 0.45)' : 'rgba(5, 150, 105, 0.45)'}
+                      borderRadius="var(--radius-sm)"
+                      backgroundColor="var(--surface-elevated)"
                     >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span
-                            style={{
-                              fontSize: '0.7rem',
-                              fontWeight: '800',
-                              padding: '2px 6px',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: inc.category === 'MEDICAL' ? 'var(--coral-subtle)' : 'var(--teal-subtle)',
-                              color: inc.category === 'MEDICAL' ? 'var(--coral-emergency)' : 'var(--teal-primary)',
-                            }}
-                          >
-                            {inc.category}
-                          </span>
-                          <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{inc.incidentCode}</strong>
+                      <div
+                        style={{
+                          padding: '1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: '800',
+                                padding: '2px 6px',
+                                borderRadius: 'var(--radius-xs)',
+                                backgroundColor: inc.category === 'MEDICAL' ? 'var(--coral-subtle)' : 'var(--teal-subtle)',
+                                color: inc.category === 'MEDICAL' ? 'var(--coral-emergency)' : 'var(--teal-primary)',
+                              }}
+                            >
+                              {inc.category}
+                            </span>
+                            <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
+                              {inc.incidentCode}
+                            </strong>
 
-                          <span
-                            style={{
-                              fontSize: '0.66rem',
-                              fontWeight: '800',
-                              padding: '2px 7px',
-                              borderRadius: '999px',
-                              backgroundColor: isTier2Required ? 'var(--coral-subtle)' : 'rgba(59, 130, 246, 0.15)',
-                              color: isTier2Required ? 'var(--coral-emergency)' : '#60A5FA',
-                              border: `1px solid ${isTier2Required ? 'var(--coral-emergency)' : 'rgba(59, 130, 246, 0.3)'}`,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            {isTier2Required ? '🚨 Tier-2 Medical Required' : '🚑 Tier-1 Transport Compatible'}
-                          </span>
+                            <span
+                              style={{
+                                fontSize: '0.66rem',
+                                fontWeight: '800',
+                                padding: '2px 7px',
+                                borderRadius: '999px',
+                                backgroundColor: isTier2Required ? 'var(--coral-subtle)' : 'rgba(59, 130, 246, 0.15)',
+                                color: isTier2Required ? 'var(--coral-emergency)' : '#60A5FA',
+                                border: `1px solid ${isTier2Required ? 'var(--coral-emergency)' : 'rgba(59, 130, 246, 0.3)'}`,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                              }}
+                            >
+                              {isTier2Required ? '🚨 Tier-2 Medical Required' : '🚑 Tier-1 Transport Compatible'}
+                            </span>
 
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            ({new Date(inc.createdAt).toLocaleTimeString()})
-                          </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              ({new Date(inc.createdAt).toLocaleTimeString()})
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <MapPin size={12} color="var(--teal-primary)" />
+                            {inc.initialLocation?.address || `Lat: ${inc.initialLocation?.latitude}, Lng: ${inc.initialLocation?.longitude}`}
+                          </div>
                         </div>
 
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <MapPin size={12} color="var(--teal-primary)" />
-                          {inc.initialLocation?.address || `Lat: ${inc.initialLocation?.latitude}, Lng: ${inc.initialLocation?.longitude}`}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: '700',
+                              color: inc.status === 'RESOLVED' ? 'var(--status-success)' : 'var(--coral-emergency)',
+                            }}
+                          >
+                            {inc.status}
+                          </span>
+
+                          {!inc.assignedResponder && (
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptIncident(inc._id)}
+                              disabled={statusActionLoading}
+                              className="btn-teal"
+                              style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem' }}
+                            >
+                              Accept Incident
+                            </button>
+                          )}
+
+                          {isMine && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--teal-primary)', fontWeight: '700' }}>
+                              Assigned to You
+                            </span>
+                          )}
                         </div>
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            color: inc.status === 'RESOLVED' ? 'var(--status-success)' : 'var(--coral-emergency)',
-                          }}
-                        >
-                          {inc.status}
-                        </span>
-
-                        {!inc.assignedResponder && (
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptIncident(inc._id)}
-                            disabled={statusActionLoading}
-                            className="btn-teal"
-                            style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem' }}
-                          >
-                            Accept Incident
-                          </button>
-                        )}
-
-                        {isMine && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--teal-primary)', fontWeight: '700' }}>
-                            Assigned to You
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    </MagicCard>
                   );
                 })}
               </div>
@@ -912,104 +919,115 @@ export const ResponderPage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Impact Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div className="card-clean">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                  Rescues Completed
-                </span>
-                <Award size={18} color="var(--teal-primary)" />
+            <MagicCard gradientColor="rgba(5, 150, 105, 0.12)" spotlightBorderColor="rgba(5, 150, 105, 0.4)">
+              <div style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                    Rescues Completed
+                  </span>
+                  <Award size={18} color="var(--teal-primary)" />
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--text-main)' }}>
+                  {profile?.completedRescues || 0}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Verified Life-Saving Actions
+                </div>
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--text-main)' }}>
-                {profile?.completedRescues || 0}
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Verified Life-Saving Actions
-              </div>
-            </div>
+            </MagicCard>
 
-            <div className="card-clean">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                  Golden Hour Impact
-                </span>
-                <Sparkles size={18} color="#D97706" />
+            <MagicCard gradientColor="rgba(217, 119, 6, 0.12)" spotlightBorderColor="rgba(217, 119, 6, 0.4)">
+              <div style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                    Golden Hour Impact
+                  </span>
+                  <Sparkles size={18} color="#D97706" />
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: '#D97706' }}>
+                  {profile?.impactPoints || 0} <span style={{ fontSize: '1rem' }}>PTS</span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Earned via Rapid Triage (+100/call)
+                </div>
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: '900', color: '#D97706' }}>
-                {profile?.impactPoints || 0} <span style={{ fontSize: '1rem' }}>PTS</span>
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Earned via Rapid Triage (+100/call)
-              </div>
-            </div>
+            </MagicCard>
 
-            <div className="card-clean">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                  Hospital Handover Credits
-                </span>
-                <ShieldCheck size={18} color="var(--teal-primary)" />
+            <MagicCard gradientColor="rgba(5, 150, 105, 0.12)" spotlightBorderColor="rgba(5, 150, 105, 0.4)">
+              <div style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                    Hospital Handover Credits
+                  </span>
+                  <ShieldCheck size={18} color="var(--teal-primary)" />
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--teal-primary)' }}>
+                  {profile?.referralCredits || 0}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Accredited EMS Hospital Drops
+                </div>
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--teal-primary)' }}>
-                {profile?.referralCredits || 0}
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Accredited EMS Hospital Drops
-              </div>
-            </div>
+            </MagicCard>
           </div>
 
           {/* Certificate Download Card */}
-          <div
-            className="card-clean"
+          <MagicCard
+            gradientColor="rgba(5, 150, 105, 0.15)"
+            spotlightBorderColor="var(--teal-primary)"
+            borderColor="var(--teal-primary)"
             style={{
-              backgroundColor: '#FFFFFF',
-              border: '2px solid var(--teal-primary)',
               boxShadow: 'var(--shadow-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              padding: '1.5rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                  border: '2px solid var(--teal-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--teal-primary)',
-                  flexShrink: 0,
-                }}
-              >
-                <Award size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                  Official Verified Rescue Certificate
-                </h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, maxWidth: '520px', lineHeight: 1.45 }}>
-                  Accredited Good Samaritan certificate documenting your verified emergency rescues, unit tier, and CPR triage in Gwalior. Instant printable PDF for resumes and medical volunteer records.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setCertificateModalOpen(true)}
-              className="btn-teal"
-              style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem', fontWeight: '800' }}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                padding: '1.5rem',
+              }}
             >
-              <Printer size={16} />
-              View & Print Certificate
-            </button>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                    border: '2px solid var(--teal-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--teal-primary)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Award size={28} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                    Official Verified Rescue Certificate
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, maxWidth: '520px', lineHeight: 1.45 }}>
+                    Accredited Good Samaritan certificate documenting your verified emergency rescues, unit tier, and CPR triage in Gwalior. Instant printable PDF for resumes and medical volunteer records.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCertificateModalOpen(true)}
+                className="btn-teal"
+                style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem', fontWeight: '800' }}
+              >
+                <Printer size={16} />
+                View & Print Certificate
+              </button>
+            </div>
+          </MagicCard>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { MagicCard } from './ui/MagicCard';
 import {
   ShieldAlert,
   Ambulance,
@@ -179,100 +180,107 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false }) => {
             const isSelected = selectedRole === item.id;
 
             return (
-              <div
+              <MagicCard
                 key={item.id}
                 onClick={() => setSelectedRole(item.id)}
+                gradientColor={item.badgeBg.replace('0.12', '0.25')}
+                spotlightBorderColor={item.badgeColor}
+                borderColor={isSelected ? item.badgeColor : 'var(--border-subtle)'}
+                borderRadius="1rem"
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '1rem',
-                  border: isSelected ? `2.5px solid ${item.badgeColor}` : '1.5px solid var(--border-subtle)',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: isSelected ? '0 10px 25px -5px rgba(0, 0, 0, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.03)',
-                  transition: 'all 0.15s ease',
+                  borderWidth: isSelected ? '2.5px' : '1.5px',
+                  boxShadow: isSelected ? `0 14px 30px -5px ${item.badgeBg}` : '0 2px 6px rgba(0, 0, 0, 0.03)',
                   transform: isSelected ? 'scale(1.02)' : 'scale(1)',
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '0.75rem',
-                        backgroundColor: item.badgeBg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: item.iconColor,
-                      }}
-                    >
-                      <Icon size={24} />
-                    </div>
-
-                    <span
-                      style={{
-                        fontSize: '0.68rem',
-                        fontWeight: '800',
-                        color: item.badgeColor,
-                        backgroundColor: item.badgeBg,
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '999px',
-                      }}
-                    >
-                      {item.badge}
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
-                    {item.title}
-                  </h3>
-                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: item.badgeColor, marginBottom: '0.75rem' }}>
-                    {item.tagline}
-                  </div>
-
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-                    {item.description}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectAndProceed(item.id, item.route);
-                  }}
-                  disabled={loading}
+                <div
                   style={{
-                    backgroundColor: isSelected ? item.badgeColor : 'var(--surface-elevated)',
-                    color: isSelected ? '#FFFFFF' : 'var(--text-main)',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    padding: '0.65rem 1rem',
-                    fontSize: '0.82rem',
-                    fontWeight: '800',
-                    cursor: loading ? 'not-allowed' : 'pointer',
+                    padding: '1.5rem',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    boxShadow: isSelected ? `0 4px 14px ${item.badgeBg}` : 'none',
-                    transition: 'all 0.15s ease',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    height: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  {loading && selectedRole === item.id ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <>
-                      <span>{item.actionLabel}</span>
-                      <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                      <div
+                        style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '0.75rem',
+                          backgroundColor: item.badgeBg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: item.iconColor,
+                        }}
+                      >
+                        <Icon size={24} />
+                      </div>
+
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: '800',
+                          color: item.badgeColor,
+                          backgroundColor: item.badgeBg,
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '999px',
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
+                      {item.title}
+                    </h3>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '700', color: item.badgeColor, marginBottom: '0.75rem' }}>
+                      {item.tagline}
+                    </div>
+
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectAndProceed(item.id, item.route);
+                    }}
+                    disabled={loading}
+                    style={{
+                      backgroundColor: isSelected ? item.badgeColor : 'var(--surface-elevated)',
+                      color: isSelected ? '#FFFFFF' : 'var(--text-main)',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      padding: '0.65rem 1rem',
+                      fontSize: '0.82rem',
+                      fontWeight: '800',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      boxShadow: isSelected ? `0 4px 14px ${item.badgeBg}` : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {loading && selectedRole === item.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <>
+                        <span>{item.actionLabel}</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </MagicCard>
             );
           })}
         </div>
