@@ -33,27 +33,34 @@ export const MainLayout = ({
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
-  // Common navigation items
-  const baseNavItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Activity },
-    { path: '/hospitals', label: 'Hospitals', icon: Building2 },
-    { path: '/contacts', label: 'Contacts', icon: Users },
-    { path: '/medical-profile', label: 'Medical Card', icon: Heart },
-    { path: '/history', label: 'History', icon: History },
-  ];
-
-  // Role-specific operational tabs
-  const roleNavItems = [];
-  if (user?.role === 'RESPONDER' || user?.role === 'ADMIN') {
-    roleNavItems.push({ path: '/responder', label: 'Responder Duty', icon: Ambulance, badge: 'Duty' });
+  // Strict role-separated navigation: Users only see workflows for their dedicated role
+  let allNavItems = [];
+  if (user?.role === 'RESPONDER') {
+    allNavItems = [
+      { path: '/responder', label: 'Field Operations', icon: Ambulance, badge: 'Duty' },
+      { path: '/hospitals', label: 'Hospitals', icon: Building2 },
+      { path: '/settings', label: 'Settings', icon: Sliders },
+    ];
+  } else if (user?.role === 'DISPATCHER') {
+    allNavItems = [
+      { path: '/dispatch', label: 'Dispatch Queue', icon: Radio, badge: 'Ops' },
+      { path: '/hospitals', label: 'Hospitals', icon: Building2 },
+      { path: '/settings', label: 'Settings', icon: Sliders },
+    ];
+  } else {
+    // Citizen / General User
+    allNavItems = [
+      { path: '/dashboard', label: 'Dashboard', icon: Activity },
+      { path: '/hospitals', label: 'Hospitals', icon: Building2 },
+      { path: '/contacts', label: 'Contacts', icon: Users },
+      { path: '/medical-profile', label: 'Medical Card', icon: Heart },
+      { path: '/history', label: 'History', icon: History },
+      { path: '/settings', label: 'Settings', icon: Sliders },
+    ];
   }
-  if (user?.role === 'DISPATCHER' || user?.role === 'ADMIN') {
-    roleNavItems.push({ path: '/dispatch', label: 'Dispatch Queue', icon: Radio, badge: 'Ops' });
-  }
 
-  const allNavItems = [...baseNavItems, ...roleNavItems, { path: '/settings', label: 'Settings', icon: Sliders }];
+  const homePath = user?.role === 'RESPONDER' ? '/responder' : (user?.role === 'DISPATCHER' ? '/dispatch' : '/dashboard');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
@@ -116,7 +123,7 @@ export const MainLayout = ({
         }}
       >
         {/* Brand / Logo */}
-        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Link to={homePath} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div
             style={{
               width: '38px',
@@ -294,30 +301,6 @@ export const MainLayout = ({
                 </span>
               </div>
 
-              {/* Quick Switch Role Pill */}
-              <button
-                type="button"
-                onClick={() => setRoleModalOpen(true)}
-                style={{
-                  backgroundColor: 'var(--surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '999px',
-                  padding: '0.2rem 0.6rem',
-                  fontSize: '0.68rem',
-                  fontWeight: '700',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Switch persona between Citizen, Responder, and Dispatcher"
-              >
-                <Sparkles size={11} color="var(--teal-primary)" />
-                <span>Switch Role</span>
-              </button>
-
               <button
                 type="button"
                 onClick={logout}
@@ -376,11 +359,11 @@ export const MainLayout = ({
         </div>
       </footer>
 
-      {/* Role Selection Gate & Persona Switcher */}
+      {/* First-Time Role Selection Gate: Enforced full-screen until a persona is chosen */}
       <RoleSelectionModal
-        isOpen={roleModalOpen || Boolean(user && user.roleSelected === false)}
-        onClose={() => setRoleModalOpen(false)}
-        canDismiss={user?.roleSelected !== false}
+        isOpen={Boolean(user && user.roleSelected === false)}
+        onClose={() => {}}
+        canDismiss={false}
       />
     </div>
   );

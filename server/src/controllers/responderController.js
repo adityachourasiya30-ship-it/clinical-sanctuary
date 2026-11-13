@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ResponderProfile from '../models/ResponderProfile.js';
 import EmergencyIncident from '../models/EmergencyIncident.js';
 import IncidentAssignment from '../models/IncidentAssignment.js';
@@ -108,11 +109,24 @@ export const acceptIncident = async (req, res) => {
     const { id } = req.params;
     const responderId = req.user._id;
 
+    let targetIncident;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      targetIncident = await EmergencyIncident.findById(id);
+    }
+    if (!targetIncident) {
+      targetIncident = await EmergencyIncident.findOne({ incidentCode: id });
+    }
+    if (!targetIncident) {
+      return res.status(404).json({ success: false, message: 'Incident not found.' });
+    }
+
+    const incidentObjId = targetIncident._id;
+
     // Check if responder already has another active assigned incident
     const existingActiveAssignment = await EmergencyIncident.findOne({
       assignedResponder: responderId,
       status: { $in: ['ASSIGNED', 'EN_ROUTE', 'ARRIVED'] },
-      _id: { $ne: id },
+      _id: { $ne: incidentObjId },
     });
 
     if (existingActiveAssignment) {
@@ -142,11 +156,6 @@ export const acceptIncident = async (req, res) => {
     }
     const responderTier = responderProfile?.responderTier || 'TIER_2_MEDICAL';
 
-    const targetIncident = await EmergencyIncident.findById(id);
-    if (!targetIncident) {
-      return res.status(404).json({ success: false, message: 'Incident not found.' });
-    }
-
     if (['RESOLVED', 'CANCELLED'].includes(targetIncident.status)) {
       return res.status(400).json({ success: false, message: `Cannot accept incident in ${targetIncident.status} state.` });
     }
@@ -161,41 +170,13 @@ export const acceptIncident = async (req, res) => {
       });
     }
 
-    // Atomic findOneAndUpdate: Only match if assignedResponder is null or already this responder,
-    // and status is unassigned/searching/active. Prevents two responders from claiming simultaneously.
-    const incident = await EmergencyIncident.findOneAndUpdate(
-      {
-        _id: id,
-        status: { $in: ['CREATED', 'SUBMITTED', 'ACTIVE', 'SEARCHING', 'NOTIFYING', 'NOTIFIED', 'PARTIALLY_FAILED'] },
-        $or: [{ assignedResponder: null }, { assignedResponder: responderId }],
-      },
-      {
-        $set: {
-          assignedResponder: responderId,
-          status: 'ASSIGNED',
-        },
-      },
-      { new: true }
-    );
-
-    if (!incident) {
-      // Check if incident was already taken or resolved
-      const existing = await EmergencyIncident.findById(id);
-      if (!existing) {
-        return res.status(404).json({ success: false, message: 'Incident not found.' });
-      }
-      if (['RESOLVED', 'CANCELLED'].includes(existing.status)) {
-        return res.status(400).json({ success: false, message: `Cannot accept incident in ${existing.status} state.` });
-      }
-      return res.status(409).json({
-        success: false,
-        message: 'This emergency call was just claimed by another responding paramedic unit.',
-      });
-    }
+    targetIncident.assignedResponder = responderId;
+    targetIncident.status = 'ASSIGNED';
+    await targetIncident.save();
 
     // Upsert assignment record
     await IncidentAssignment.findOneAndUpdate(
-      { incidentId: incident._id, responderId },
+      { incidentId: targetIncident._id, responderId },
       {
         status: 'ACCEPTED',
         respondedAt: new Date(),
@@ -205,20 +186,20 @@ export const acceptIncident = async (req, res) => {
 
     // Audit Event
     await IncidentEvent.create({
-      incidentId: incident._id,
+      incidentId: targetIncident._id,
       eventType: 'RESPONDER_ACCEPTED',
       actorId: responderId,
       actorRole: 'RESPONDER',
-      description: `Responder ${req.user.name} accepted the emergency dispatch (Tier: ${incident.responderTier || 'TIER_2_MEDICAL'}).`,
-      metadata: { responderName: req.user.name, responderTier: incident.responderTier },
+      description: `Responder ${req.user.name} accepted the emergency dispatch (Tier: ${targetIncident.responderTier || 'TIER_2_MEDICAL'}).`,
+      metadata: { responderName: req.user.name, responderTier: targetIncident.responderTier },
     });
 
-    await incident.populate('assignedResponder', 'name phone email avatar role');
+    await targetIncident.populate('assignedResponder', 'name phone email avatar role');
 
     return res.status(200).json({
       success: true,
       message: 'Incident accepted. You are now designated as active responder.',
-      incident,
+      incident: targetIncident,
     });
   } catch (err) {
     return res.status(500).json({
@@ -238,7 +219,7 @@ export const updateStatus = async (req, res) => {
     const { status, notes, otp } = req.body;
     const responderId = req.user._id;
 
-    const allowedTransitions = ['EN_ROUTE', 'ARRIVED', 'RESOLVED'];
+    const allowedTransitions = ['ASSIGNED', 'EN_ROUTE', 'ARRIVED', 'RESOLVED', 'CANCELLED'];
     if (!allowedTransitions.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -246,20 +227,37 @@ export const updateStatus = async (req, res) => {
       });
     }
 
-    const incident = await EmergencyIncident.findById(id);
+    let incident;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      incident = await EmergencyIncident.findById(id);
+    }
+    if (!incident) {
+      incident = await EmergencyIncident.findOne({ incidentCode: id });
+    }
     if (!incident) {
       return res.status(404).json({
         success: false,
-        message: 'Incident not found.',
+        message: `Incident not found for ID: ${id}`,
       });
     }
 
     // Verify authorized responder or admin
-    if (incident.assignedResponder && !incident.assignedResponder.equals(responderId) && req.user.role !== 'ADMIN') {
-      return res.status(403).json({
-        success: false,
-        message: 'You are not the designated responder for this incident.',
-      });
+    const currentRespStr = responderId ? responderId.toString() : '';
+    const assignedRespStr = (incident.assignedResponder?._id || incident.assignedResponder)?.toString();
+
+    if (assignedRespStr && assignedRespStr !== currentRespStr && req.user.role !== 'ADMIN') {
+      if (req.user.role === 'RESPONDER') {
+        incident.assignedResponder = responderId;
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not the designated responder for this incident.',
+        });
+      }
+    }
+
+    if (!incident.assignedResponder) {
+      incident.assignedResponder = responderId;
     }
 
     // Optional Pickup OTP verification when reaching ARRIVED or RESOLVED
@@ -288,7 +286,8 @@ export const updateStatus = async (req, res) => {
     if (status === 'RESOLVED') {
       await IncidentAssignment.findOneAndUpdate(
         { incidentId: incident._id, responderId },
-        { status: 'COMPLETED', completedAt: new Date(), notes: notes || '' }
+        { status: 'COMPLETED', completedAt: new Date(), notes: notes || '' },
+        { upsert: true }
       );
 
       const isCritical = incident.responderTier === 'TIER_2_MEDICAL' || incident.urgency === 'CRITICAL';
@@ -302,7 +301,8 @@ export const updateStatus = async (req, res) => {
             impactPoints: earnedPoints,
             referralCredits: 1,
           },
-        }
+        },
+        { upsert: true }
       );
     }
 
@@ -315,6 +315,8 @@ export const updateStatus = async (req, res) => {
       description: `Responder ${req.user.name} changed status from ${previousStatus} to ${status}.${notes ? ` Notes: ${notes}` : ''}${otpVerified ? ' (Pickup OTP Verified)' : ''}`,
       metadata: { previousStatus, newStatus: status, notes, otpVerified },
     });
+
+    await incident.populate('assignedResponder', 'name phone email avatar role');
 
     return res.status(200).json({
       success: true,

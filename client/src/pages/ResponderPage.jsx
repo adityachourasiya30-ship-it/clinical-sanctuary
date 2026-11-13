@@ -39,10 +39,20 @@ export const ResponderPage = () => {
   const [statusActionLoading, setStatusActionLoading] = useState(false);
   const [dutyLoading, setDutyLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [toast, setToast] = useState(null);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('DUTY'); // 'DUTY' | 'IMPACT' | 'TRAINING'
   const [certificateModalOpen, setCertificateModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (toast && toast.type !== 'warning') {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // Fetch responder profile and available incidents
   const loadResponderData = async () => {
@@ -152,21 +162,28 @@ export const ResponderPage = () => {
       if (res.data.success) {
         setActiveIncident(res.data.incident);
         fetchMedicalSummary(incidentId);
-        setMessage('Emergency Incident accepted! You are now designated as active first responder.');
+        setToast({
+          type: 'success',
+          title: 'Dispatch Accepted',
+          message: 'Emergency Incident accepted! You are now designated as active first responder.',
+        });
         loadResponderData();
       }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.requiresTier === 'TIER_2_MEDICAL') {
-        const takeQuiz = window.confirm(
-          '🚨 Tier-2 Certification Required:\n\n' +
-            err.response.data.message +
-            '\n\nWould you like to take the 5-question First-Aid/CPR Assessment now to unlock Tier-2 Medical dispatches?'
-        );
-        if (takeQuiz) {
-          setQuizModalOpen(true);
-        }
+        setToast({
+          type: 'warning',
+          title: 'Tier-2 Medical Certification Required',
+          message: err.response.data.message || 'Critical emergency requires Tier-2 certification.',
+          actionLabel: 'Take First-Aid/CPR Assessment',
+          onAction: () => setQuizModalOpen(true),
+        });
       } else {
-        alert(err.response?.data?.message || 'Failed to accept incident.');
+        setToast({
+          type: 'error',
+          title: 'Unable to Accept Dispatch',
+          message: err.response?.data?.message || err.message || 'Failed to accept incident.',
+        });
       }
     } finally {
       setStatusActionLoading(false);
@@ -179,10 +196,18 @@ export const ResponderPage = () => {
       const res = await api.post('/responder/tier', { tier: newTier });
       if (res.data.success) {
         setProfile(res.data.profile);
-        setMessage(`Responder tier updated to ${newTier === 'TIER_2_MEDICAL' ? 'Tier-2 Medical ALS' : 'Tier-1 Transport'}.`);
+        setToast({
+          type: 'success',
+          title: 'Responder Tier Updated',
+          message: `Responder tier updated to ${newTier === 'TIER_2_MEDICAL' ? 'Tier-2 Medical ALS' : 'Tier-1 Transport'}.`,
+        });
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update tier.');
+      setToast({
+        type: 'error',
+        title: 'Tier Switch Failed',
+        message: err.response?.data?.message || err.message || 'Failed to update tier.',
+      });
     }
   };
 
@@ -191,7 +216,7 @@ export const ResponderPage = () => {
     if (!activeIncident) return;
     setStatusActionLoading(true);
     try {
-      const incidentId = activeIncident.id || activeIncident._id;
+      const incidentId = activeIncident._id || activeIncident.id;
       const payload = { status };
       const pinToSend = otpOverride || enteredOtp;
       if (pinToSend && pinToSend.trim().length > 0) {
@@ -204,15 +229,27 @@ export const ResponderPage = () => {
           setActiveIncident(null);
           setMedicalSummary(null);
           setEnteredOtp('');
-          setMessage('Emergency response concluded and resolved.');
+          setToast({
+            type: 'success',
+            title: 'Emergency Concluded',
+            message: 'Emergency response concluded and resolved.',
+          });
         } else {
           setActiveIncident(res.data.incident);
-          setMessage(`Status transitioned to: ${status}`);
+          setToast({
+            type: 'success',
+            title: 'Status Updated',
+            message: `Status transitioned to: ${status}`,
+          });
         }
         loadResponderData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update status.');
+      setToast({
+        type: 'error',
+        title: 'Status Update Failed',
+        message: err.response?.data?.message || err.message || 'Failed to update status.',
+      });
     } finally {
       setStatusActionLoading(false);
     }
@@ -220,6 +257,123 @@ export const ResponderPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Floating Action/Alert Toast Banner */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: '1.25rem',
+            right: '1.25rem',
+            zIndex: 99999,
+            maxWidth: '420px',
+            width: 'calc(100vw - 2.5rem)',
+            backgroundColor:
+              toast.type === 'error'
+                ? '#FEF2F2'
+                : toast.type === 'warning'
+                ? '#FFFBEB'
+                : '#ECFDF5',
+            border: `1.5px solid ${
+              toast.type === 'error'
+                ? '#F87171'
+                : toast.type === 'warning'
+                ? '#FBBF24'
+                : '#34D399'
+            }`,
+            borderRadius: '12px',
+            padding: '0.85rem 1rem',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.35rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              {toast.type === 'error' ? (
+                <AlertTriangle size={18} color="#DC2626" />
+              ) : toast.type === 'warning' ? (
+                <AlertTriangle size={18} color="#D97706" />
+              ) : (
+                <CheckCircle size={18} color="#059669" />
+              )}
+              <span
+                style={{
+                  fontWeight: '700',
+                  fontSize: '0.88rem',
+                  color:
+                    toast.type === 'error'
+                      ? '#991B1B'
+                      : toast.type === 'warning'
+                      ? '#92400E'
+                      : '#065F46',
+                }}
+              >
+                {toast.title || (toast.type === 'error' ? 'Notice' : toast.type === 'warning' ? 'Action Required' : 'Success')}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6B7280',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                padding: '0 0.25rem',
+                lineHeight: '1',
+              }}
+            >
+              &times;
+            </button>
+          </div>
+          <div
+            style={{
+              fontSize: '0.82rem',
+              color:
+                toast.type === 'error'
+                  ? '#7F1D1D'
+                  : toast.type === 'warning'
+                  ? '#78350F'
+                  : '#064E3B',
+              lineHeight: 1.45,
+            }}
+          >
+            {toast.message}
+          </div>
+          {toast.actionLabel && (
+            <button
+              type="button"
+              onClick={() => {
+                if (toast.onAction) toast.onAction();
+                setToast(null);
+              }}
+              style={{
+                marginTop: '0.35rem',
+                alignSelf: 'flex-start',
+                padding: '0.45rem 0.8rem',
+                backgroundColor: toast.type === 'warning' ? '#D97706' : '#059669',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <span>{toast.actionLabel}</span>
+              <ChevronRight size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 3-Tab Responder Navigation Bar */}
       <div
         style={{

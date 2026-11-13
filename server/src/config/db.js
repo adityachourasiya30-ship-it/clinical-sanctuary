@@ -10,7 +10,7 @@ const RETRY_DELAY_MS = 8000;
 async function tryLocalMongo(uri) {
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 3000,
-    dbName: mongoose.connection?.name || 'clinical_sanctuary',
+    dbName: 'clinical_sanctuary',
   });
 }
 

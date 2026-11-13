@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   Info,
   CheckCircle,
+  UserCheck,
 } from 'lucide-react';
+import { RoleSelectionModal } from '../components/RoleSelectionModal';
 
 export const SettingsPage = () => {
   const { user, logout } = useAuth();
@@ -19,6 +21,7 @@ export const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
   const [erasing, setErasing] = useState(false);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -99,6 +102,39 @@ export const SettingsPage = () => {
           {message}
         </div>
       )}
+
+      {/* Operational Role & Persona Management */}
+      <div className="card-clean" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <UserCheck size={20} color="var(--teal-primary)" />
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                Operational Role & Persona
+              </h3>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Your active session persona is currently set to:{' '}
+                <strong style={{ color: 'var(--teal-primary)' }}>{user?.role || 'CITIZEN'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setRoleModalOpen(true)}
+            className="btn-teal"
+            style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+          >
+            Change Account Persona
+          </button>
+        </div>
+      </div>
+
+      <RoleSelectionModal
+        isOpen={roleModalOpen}
+        onClose={() => setRoleModalOpen(false)}
+        canDismiss={true}
+      />
 
       {/* Permissions & Data Sharing */}
       <div className="card-clean" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
