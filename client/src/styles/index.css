@@ -153,6 +153,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: #F8FAFC !important;
   font-family: var(--font-sans) !important;
   z-index: 10;
+  overflow: hidden !important;
+  isolation: isolate;
+  contain: paint;
 }
 
 .leaflet-tile-pane {

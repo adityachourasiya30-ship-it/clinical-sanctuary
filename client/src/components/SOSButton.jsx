@@ -98,7 +98,7 @@ export const SOSButton = ({ onTrigger, loading, disabled, activeEmergency }) => 
       </div>
 
       <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
-        <h3
+        <h2
           style={{
             fontSize: '1.2rem',
             fontWeight: '900',
@@ -108,7 +108,7 @@ export const SOSButton = ({ onTrigger, loading, disabled, activeEmergency }) => 
           }}
         >
           {activeEmergency ? 'EMERGENCY ACTIVE — TRANSMITTING TELEMETRY' : 'Immediate Medical Assistance'}
-        </h3>
+        </h2>
         <p
           style={{
             fontSize: '0.86rem',

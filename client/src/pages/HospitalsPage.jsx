@@ -48,13 +48,13 @@ export const HospitalsPage = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Header Banner */}
-      <div className="card-clean" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="card-clean" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <Building2 size={24} color="var(--teal-primary)" />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)', lineHeight: 1.2 }}>
               Nearby Emergency Healthcare Directory
             </h2>
           </div>
@@ -63,7 +63,7 @@ export const HospitalsPage = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', alignSelf: 'flex-start', marginTop: '0.2rem' }}>
           <button
             type="button"
             onClick={refreshLocation}
@@ -77,60 +77,52 @@ export const HospitalsPage = () => {
         </div>
       </div>
 
-      {/* Legal & Medical Facility Disclaimer Card */}
-      <div
-        style={{
-          backgroundColor: 'var(--surface-elevated)',
-          borderLeft: '4px solid var(--teal-primary)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '0.85rem 1.15rem',
-          fontSize: '0.78rem',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-        }}
-      >
-        <AlertCircle size={18} color="var(--teal-primary)" style={{ flexShrink: 0 }} />
-        <div>
-          <strong>Operational Notice:</strong> Facility listings show geographic proximity derived from verified OpenStreetMap anchor nodes. Listing does not guarantee available ICU beds or direct hospital admission acceptance without prior telephone triage.
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
+      {/* Search & Filter Bar (Positioned Prominently Ahead of Content) */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ flex: '1 1 320px', maxWidth: '520px', position: 'relative' }}>
           <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search hospital by name or locality..."
+            aria-label="Search hospitals by name or locality"
             style={{
               width: '100%',
-              backgroundColor: 'var(--surface-primary)',
-              border: '1px solid var(--border-subtle)',
+              height: '40px',
+              boxSizing: 'border-box',
+              backgroundColor: '#1A2333',
+              border: '1.5px solid rgba(255, 255, 255, 0.22)',
               borderRadius: 'var(--radius-sm)',
-              padding: '0.65rem 0.8rem 0.65rem 2.4rem',
-              color: 'var(--text-main)',
+              padding: '0 0.85rem 0 2.4rem',
+              color: '#FFFFFF',
               fontSize: '0.85rem',
               outline: 'none',
+              transition: 'border-color 0.15s ease',
             }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)'; }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Search Radius:</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', height: '40px' }}>
+          <label htmlFor="search-radius-select" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
+            Search Radius:
+          </label>
           <select
+            id="search-radius-select"
             value={radiusKm}
             onChange={(e) => setRadiusKm(Number(e.target.value))}
             style={{
-              backgroundColor: 'var(--surface-primary)',
-              border: '1px solid var(--border-subtle)',
+              height: '40px',
+              boxSizing: 'border-box',
+              backgroundColor: '#1A2333',
+              border: '1.5px solid rgba(255, 255, 255, 0.22)',
               borderRadius: 'var(--radius-sm)',
-              padding: '0.65rem 0.8rem',
-              color: 'var(--text-main)',
+              padding: '0 0.85rem',
+              color: '#FFFFFF',
               fontSize: '0.85rem',
+              outline: 'none',
             }}
           >
             <option value={5}>5 km</option>
@@ -138,6 +130,28 @@ export const HospitalsPage = () => {
             <option value={15}>15 km</option>
             <option value={25}>25 km</option>
           </select>
+        </div>
+      </div>
+
+      {/* Compact Operational Notice Banner (Positioned Below Search Controls) */}
+      <div
+        role="note"
+        aria-label="Operational Disclaimer"
+        style={{
+          backgroundColor: 'var(--surface-elevated)',
+          borderLeft: '3px solid var(--teal-primary)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.55rem 0.95rem',
+          fontSize: '0.76rem',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+        }}
+      >
+        <AlertCircle size={16} color="var(--teal-primary)" style={{ flexShrink: 0 }} />
+        <div>
+          <strong style={{ color: 'var(--text-main)' }}>Operational Notice:</strong> Facility listings show geographic proximity derived from verified OpenStreetMap anchor nodes. Proximity does not guarantee available ICU beds or immediate admission without prior telephone triage.
         </div>
       </div>
 
@@ -198,11 +212,21 @@ export const HospitalsPage = () => {
                   ) : (
                     <a
                       href="tel:108"
-                      className="btn-coral"
-                      style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem' }}
+                      className="btn-secondary"
+                      style={{
+                        fontSize: '0.78rem',
+                        padding: '0.45rem 0.85rem',
+                        backgroundColor: '#242C34',
+                        border: '1px solid rgba(225, 29, 72, 0.45)',
+                        color: '#FCA5A5',
+                        borderRadius: 'var(--radius-sm)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
                     >
-                      <PhoneCall size={14} />
-                      Dial 108 Ambulance
+                      <PhoneCall size={14} color="#E11D48" />
+                      <span>Dial 108 Ambulance</span>
                     </a>
                   )}
 
@@ -212,10 +236,11 @@ export const HospitalsPage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-secondary"
-                      style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem' }}
+                      aria-label={`Get directions to ${h.name} on Google Maps (opens in new tab)`}
+                      style={{ fontSize: '0.78rem', padding: '0.45rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                     >
                       <Navigation size={14} />
-                      Directions (Maps) <ExternalLink size={12} />
+                      <span>Directions (Maps)</span>
                     </a>
                   )}
                 </div>
@@ -225,7 +250,7 @@ export const HospitalsPage = () => {
         </div>
 
         {/* Map View */}
-        <div className="card-clean" style={{ height: '560px', position: 'sticky', top: '80px' }}>
+        <div className="card-clean" style={{ height: '560px', position: 'sticky', top: '80px', overflow: 'hidden', isolation: 'isolate' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <MapPin size={18} color="var(--teal-primary)" />
             <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)' }}>

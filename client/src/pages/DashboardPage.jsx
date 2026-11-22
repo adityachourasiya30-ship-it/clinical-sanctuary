@@ -451,8 +451,28 @@ export const DashboardPage = () => {
         >
           <span>{statusMessage}</span>
           <button
+            type="button"
             onClick={() => setStatusMessage(null)}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 'bold' }}
+            aria-label="Close notification"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '6px',
+              fontSize: '1.25rem',
+              lineHeight: 1,
+              transition: 'background-color 0.15s ease',
+              marginRight: '-0.35rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             &times;
           </button>
@@ -657,14 +677,14 @@ export const DashboardPage = () => {
             </div>
 
             {/* Two Simple Panic-Proof Triage Pills */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <button
                 type="button"
                 onClick={() => setSelectedCategory('MEDICAL')}
                 style={{
                   flex: 1,
                   padding: '0.75rem 1rem',
-                  borderRadius: '14px',
+                  borderRadius: '8px',
                   backgroundColor: selectedCategory === 'MEDICAL' ? 'rgba(225, 29, 72, 0.12)' : 'var(--surface-elevated)',
                   border: `2px solid ${selectedCategory === 'MEDICAL' ? '#E11D48' : 'var(--border-subtle)'}`,
                   color: selectedCategory === 'MEDICAL' ? '#E11D48' : 'var(--text-secondary)',
@@ -689,7 +709,7 @@ export const DashboardPage = () => {
                 style={{
                   flex: 1,
                   padding: '0.75rem 1rem',
-                  borderRadius: '14px',
+                  borderRadius: '8px',
                   backgroundColor: selectedCategory === 'GENERAL' ? 'rgba(37, 99, 235, 0.12)' : 'var(--surface-elevated)',
                   border: `2px solid ${selectedCategory === 'GENERAL' ? '#2563EB' : 'var(--border-subtle)'}`,
                   color: selectedCategory === 'GENERAL' ? '#2563EB' : 'var(--text-secondary)',
@@ -709,20 +729,28 @@ export const DashboardPage = () => {
               </button>
             </div>
 
-            {/* Optional toggle for specific emergency types */}
-            <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+            {/* Grouped Triage Action: More Categories with High Contrast & Safe Spacing */}
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
               <button
                 type="button"
                 onClick={() => setShowAllCategories(!showAllCategories)}
+                aria-expanded={showAllCategories}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--teal-primary)',
-                  fontSize: '0.72rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.18)',
+                  color: '#F8FAFC',
+                  fontSize: '0.78rem',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  textDecoration: 'underline',
+                  padding: '0.4rem 0.95rem',
+                  borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.15s ease',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.14)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'; }}
               >
                 {showAllCategories ? '▲ Hide Extra Categories' : '▼ More Categories (Fire, Police, Accident)'}
               </button>
@@ -803,31 +831,35 @@ export const DashboardPage = () => {
                 Dial 100 (Police)
               </a>
             </div>
-          </div>
 
-          {/* Subtle Collapsible Drawer for Advanced Utilities (Keeps Idle View Clean & Panic-Proof) */}
-          <div style={{ textAlign: 'center', margin: '0.25rem 0' }}>
-            <button
-              type="button"
-              onClick={() => setShowSecondaryTools(!showSecondaryTools)}
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-secondary)',
-                borderRadius: '999px',
-                padding: '0.55rem 1.25rem',
-                fontSize: '0.8rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                boxShadow: 'var(--shadow-sm)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {showSecondaryTools ? '▲ Hide Advanced Tools & Records' : '▼ Show Voice Notes, Health Profile & Hospitals'}
-            </button>
+            {/* Integrated Secondary Tools Drawer Toggle (Clean Footer Integration) */}
+            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
+                type="button"
+                onClick={() => setShowSecondaryTools(!showSecondaryTools)}
+                aria-expanded={showSecondaryTools}
+                style={{
+                  background: '#2B343D',
+                  border: '1px solid #33414E',
+                  color: '#CBD5E1',
+                  borderRadius: '8px',
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  width: '100%',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#333F4A'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#2B343D'; }}
+              >
+                {showSecondaryTools ? '▲ Hide Advanced Tools & Records' : '▼ Show Voice Notes, Health Profile & Hospitals'}
+              </button>
+            </div>
           </div>
 
           {showSecondaryTools && (

@@ -511,18 +511,44 @@ export const EmergencyMap = ({
           gap: '10px',
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#cbd5e1' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#cbd5e1' }}>
+          <span
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#ef4444',
+              border: '1.5px solid #ffffff',
+              boxShadow: '0 0 6px rgba(239, 68, 68, 0.7)',
+            }}
+          />
           Patient
         </span>
         {initialResponderPos && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0F172A', fontWeight: '700' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0F172A' }} />
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#cbd5e1' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#0F172A', border: '1.5px solid #ffffff' }} />
             Ambulance
           </span>
         )}
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#cbd5e1' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#10b981' }} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#cbd5e1' }}>
+          <span
+            style={{
+              width: '13px',
+              height: '13px',
+              borderRadius: '3px',
+              backgroundColor: '#10b981',
+              border: '1px solid #ffffff',
+              color: '#ffffff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              fontWeight: '900',
+              lineHeight: 1,
+            }}
+          >
+            +
+          </span>
           Hospitals
         </span>
       </div>

@@ -80,7 +80,7 @@ export const MainLayout = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <span style={{ color: 'var(--coral-emergency, #E11D48)', fontWeight: '700', fontSize: '0.72rem', letterSpacing: '0.04em' }}>OFFICIAL HELPLINES:</span>
+          <span style={{ color: 'var(--coral-emergency, #E11D48)', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '0.01em' }}>Official Helplines:</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span>Emergency: <strong style={{ color: 'var(--text-main, #FFFFFF)' }}>112</strong></span>
             <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
@@ -168,7 +168,7 @@ export const MainLayout = ({
                 PRO
               </span>
             </div>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '500', lineHeight: 1.2 }}>
               Precision in every Response
             </span>
           </div>
@@ -303,7 +303,18 @@ export const MainLayout = ({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span
+                  title={user.name}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    maxWidth: '160px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {user.name}
                 </span>
                 <span style={{ fontSize: '0.65rem', color: 'var(--teal-primary)', fontWeight: '700' }}>
