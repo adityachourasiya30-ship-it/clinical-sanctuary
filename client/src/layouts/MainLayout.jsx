@@ -75,32 +75,41 @@ export const MainLayout = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.5rem',
+          gap: '0.75rem',
           color: 'var(--text-secondary)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: 'var(--coral-emergency)', fontWeight: '700' }}>OFFICIAL HELPLINES:</span>
-          <span>National Emergency: <strong style={{ color: 'var(--text-main)' }}>112</strong></span>
-          <span>&bull;</span>
-          <span>Police: <strong style={{ color: 'var(--text-main)' }}>100</strong></span>
-          <span>&bull;</span>
-          <span>Ambulance: <strong style={{ color: 'var(--text-main)' }}>108</strong></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <span style={{ color: 'var(--coral-emergency, #E11D48)', fontWeight: '700', fontSize: '0.72rem', letterSpacing: '0.04em' }}>OFFICIAL HELPLINES:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <span>Emergency: <strong style={{ color: 'var(--text-main, #FFFFFF)' }}>112</strong></span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
+            <span>Police: <strong style={{ color: 'var(--text-main, #FFFFFF)' }}>100</strong></span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>|</span>
+            <span>Ambulance: <strong style={{ color: 'var(--text-main, #FFFFFF)' }}>108</strong></span>
+          </div>
         </div>
         <div>
           <a
             href="tel:112"
+            className="bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-semibold px-3 py-1 rounded-md shrink-0 whitespace-nowrap transition-colors"
             style={{
-              color: 'var(--coral-emergency)',
-              fontWeight: '700',
+              backgroundColor: '#E11D48',
+              color: '#FFFFFF',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '0.375rem',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.25rem',
-              textDecoration: 'underline',
+              gap: '0.35rem',
+              textDecoration: 'none',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
           >
             <PhoneCall size={12} />
-            Immediate 112 Direct Dial
+            <span>Call 112</span>
           </a>
         </div>
       </div>

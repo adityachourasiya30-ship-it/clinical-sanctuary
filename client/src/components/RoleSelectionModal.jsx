@@ -8,10 +8,11 @@ import {
   ArrowRight,
   X,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDismissible = false }) => {
-  const { user, updateRole } = useAuth();
+  const { user, updateRole, logout } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(null);
   const [hoveredRole, setHoveredRole] = useState(null);
@@ -23,9 +24,8 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
   // If user.roleSelected !== true (mandatory first-time onboarding gate), keep it non-dismissible (no close button).
   // If user.roleSelected === true (opened later from settings to change roles), allow dismissal.
   const allowDismiss = Boolean(
-    (canDismiss || isDismissible) &&
     user?.roleSelected === true &&
-    typeof onClose === 'function'
+    (canDismiss || isDismissible || typeof onClose === 'function')
   );
 
   const roles = [
@@ -41,7 +41,7 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
       iconColor: '#E11D48',
       iconBg: 'rgba(225, 29, 72, 0.14)',
       description:
-        'Activate 1-tap SOS assistance, broadcast live GPS breadcrumbs to family contacts, and track incoming paramedic units on real road routes.',
+        'Send an SOS, share live location with family, and track incoming emergency help.',
       route: '/dashboard',
       actionLabel: 'Continue as Citizen',
     },
@@ -57,7 +57,7 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
       iconColor: '#38BDF8',
       iconBg: 'rgba(56, 189, 248, 0.14)',
       description:
-        'Respond to critical incidents in Gwalior, utilize on-scene 110 BPM CPR guidance, nearest hospital handover, and earn Verified Rescue Certificates.',
+        'Receive emergency alerts, follow CPR cadence guidance, and navigate to hospital handoffs.',
       route: '/responder',
       actionLabel: 'Continue as Responder',
     },
@@ -73,7 +73,7 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
       iconColor: '#38BDF8',
       iconBg: 'rgba(56, 189, 248, 0.14)',
       description:
-        'Monitor regional emergency heatmaps, manage incoming triage queue, dispatch paramedic fleets, and review audio evidence logs.',
+        'Monitor incident heatmaps, triage incoming calls, and dispatch emergency response units.',
       route: '/dispatch',
       actionLabel: 'Continue as Dispatcher',
     },
@@ -94,6 +94,16 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
       navigate(route);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSwitchAccount = async () => {
+    try {
+      if (logout) await logout();
+      if (onClose) onClose();
+      navigate('/login');
+    } catch (err) {
+      navigate('/login');
     }
   };
 
@@ -167,6 +177,25 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
 
         {/* Modal Header: Crisp Flat Layout */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '999px',
+              color: '#CBD5E1',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              marginBottom: '0.85rem',
+            }}
+          >
+            <Sparkles size={12} color="#38BDF8" />
+            <span>Clinical Sanctuary</span>
+          </div>
+
           <h2
             style={{
               fontSize: '1.75rem',
@@ -182,7 +211,7 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
             style={{
               fontSize: '0.9rem',
               color: '#CBD5E1',
-              maxWidth: '480px',
+              maxWidth: '520px',
               margin: '0 auto',
               lineHeight: 1.55,
             }}
@@ -345,9 +374,39 @@ export const RoleSelectionModal = ({ isOpen, onClose, canDismiss = false, isDism
           })}
         </div>
 
-        {/* Footer info */}
-        <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#94A3B8' }}>
-          Session authenticated for <strong style={{ color: '#F8FAFC' }}>{user?.email || 'User'}</strong>
+        {/* Human Session Footer & Switch Account */}
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: '0.8rem',
+            color: '#94A3B8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.45rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span>
+            Signed in as <strong style={{ color: '#F8FAFC' }}>{user?.email || 'User'}</strong>
+          </span>
+          <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>&bull;</span>
+          <button
+            type="button"
+            onClick={handleSwitchAccount}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: '#38BDF8',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            Switch account
+          </button>
         </div>
       </div>
     </div>
