@@ -536,19 +536,19 @@ export const EmergencyMap = ({
             left: '12px',
             right: '12px',
             zIndex: 1000,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(36, 44, 52, 0.95)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid #E2E8F0',
+            border: '1px solid #33414E',
             borderRadius: '24px',
             padding: '0.75rem 1.15rem',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.35)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '0.75rem',
-            color: '#0F172A',
+            color: '#FFFFFF',
           }}
         >
           {/* Left: Responder Details */}
@@ -558,8 +558,8 @@ export const EmergencyMap = ({
                 width: '40px',
                 height: '40px',
                 borderRadius: '50%',
-                backgroundColor: '#F1F5F9',
-                border: '1.5px solid #E2E8F0',
+                backgroundColor: '#2B343D',
+                border: '1.5px solid #33414E',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -571,7 +571,7 @@ export const EmergencyMap = ({
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.92rem', fontWeight: '800', color: '#0F172A' }}>
+                <span style={{ fontSize: '0.92rem', fontWeight: '800', color: '#FFFFFF' }}>
                   {responderInfo.name}
                 </span>
                 <span
@@ -580,9 +580,9 @@ export const EmergencyMap = ({
                     fontWeight: '800',
                     padding: '2px 7px',
                     borderRadius: '999px',
-                    backgroundColor: isTier1 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.08)',
-                    color: isTier1 ? '#2563EB' : '#0F172A',
-                    border: isTier1 ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid #E2E8F0',
+                    backgroundColor: isTier1 ? 'rgba(56, 189, 248, 0.15)' : 'rgba(225, 29, 72, 0.15)',
+                    color: isTier1 ? '#38BDF8' : '#E11D48',
+                    border: `1px solid ${isTier1 ? 'rgba(56, 189, 248, 0.3)' : 'rgba(225, 29, 72, 0.35)'}`,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.25rem',
@@ -592,9 +592,9 @@ export const EmergencyMap = ({
                   {isTier1 ? 'Tier 1 Transport' : 'Tier 2 Medical ALS'}
                 </span>
               </div>
-              <div style={{ fontSize: '0.73rem', color: '#64748B' }}>
+              <div style={{ fontSize: '0.73rem', color: '#94A3B8' }}>
                 {responderInfo.vehicle} &bull;{' '}
-                <span style={{ color: '#94A3B8' }}>{responderInfo.badgeNumber || 'EMS-Active'}</span>
+                <span style={{ color: '#64748B' }}>{responderInfo.badgeNumber || 'EMS-Active'}</span>
               </div>
             </div>
           </div>
@@ -603,8 +603,8 @@ export const EmergencyMap = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <div
               style={{
-                backgroundColor: '#F8FAFC',
-                border: '1px solid #E2E8F0',
+                backgroundColor: '#2B343D',
+                border: '1px solid #33414E',
                 borderRadius: '8px',
                 padding: '0.35rem 0.7rem',
                 display: 'flex',
@@ -612,8 +612,8 @@ export const EmergencyMap = ({
                 gap: '0.45rem',
               }}
             >
-              <Clock size={14} color="#0F172A" />
-              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0F172A' }}>
+              <Clock size={14} color="#38BDF8" />
+              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#FFFFFF' }}>
                 {status === 'ARRIVED'
                   ? '📍 On Scene (Arrived)'
                   : `${routeTelemetry.distanceKm} km • ~${routeTelemetry.durationMins} mins ETA`}
@@ -623,11 +623,11 @@ export const EmergencyMap = ({
             <span
               style={{
                 fontSize: '0.66rem',
-                color: '#64748B',
+                color: '#94A3B8',
                 padding: '0.25rem 0.5rem',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: '#202427',
                 borderRadius: '6px',
-                border: '1px solid #E2E8F0',
+                border: '1px solid #33414E',
               }}
               title="Real-time road coordinates provided by Project OSRM"
             >
@@ -640,8 +640,8 @@ export const EmergencyMap = ({
             {pickupPin && (
               <div
                 style={{
-                  backgroundColor: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#2B343D',
+                  border: '1px solid #33414E',
                   borderRadius: '8px',
                   padding: '0.3rem 0.65rem',
                   textAlign: 'center',
@@ -651,7 +651,7 @@ export const EmergencyMap = ({
                 <div
                   style={{
                     fontSize: '0.58rem',
-                    color: '#64748B',
+                    color: '#94A3B8',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                   }}
@@ -662,7 +662,7 @@ export const EmergencyMap = ({
                   style={{
                     fontSize: '0.95rem',
                     fontWeight: '900',
-                    color: '#0F172A',
+                    color: '#FFFFFF',
                     letterSpacing: '0.12em',
                     fontFamily: 'var(--font-mono)',
                   }}
@@ -678,7 +678,8 @@ export const EmergencyMap = ({
               style={{
                 fontSize: '0.78rem',
                 padding: '0.45rem 0.85rem',
-                backgroundColor: '#0F172A',
+                backgroundColor: '#2B343D',
+                border: '1px solid #33414E',
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 display: 'flex',

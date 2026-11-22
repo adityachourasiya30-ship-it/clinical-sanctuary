@@ -123,21 +123,22 @@ export const MainLayout = ({
         }}
       >
         {/* Brand / Logo */}
-        <Link to={homePath} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Link to={homePath} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: 'var(--radius-sm)',
+              width: '30px',
+              height: '30px',
+              borderRadius: '6px',
               backgroundColor: 'var(--coral-emergency)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
-              boxShadow: '0 0 16px var(--coral-glow)',
+              boxShadow: '0 0 14px var(--coral-glow)',
+              flexShrink: 0,
             }}
           >
-            <ShieldAlert size={22} />
+            <span style={{ fontSize: '20px', fontWeight: '900', lineHeight: 1 }}>+</span>
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -148,11 +149,11 @@ export const MainLayout = ({
                 style={{
                   fontSize: '0.65rem',
                   fontWeight: '700',
-                  color: 'var(--teal-primary)',
-                  backgroundColor: 'var(--teal-subtle)',
+                  color: '#38BDF8',
+                  backgroundColor: 'rgba(56, 189, 248, 0.12)',
                   padding: '0.1rem 0.4rem',
                   borderRadius: 'var(--radius-xs)',
-                  border: '1px solid var(--teal-border)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
                 }}
               >
                 PRO
@@ -226,16 +227,16 @@ export const MainLayout = ({
                     alignItems: 'center',
                     gap: '0.35rem',
                     padding: '0.42rem 0.75rem',
-                    borderRadius: 'var(--radius-sm)',
+                    borderRadius: '8px',
                     fontSize: '0.8rem',
                     fontWeight: '600',
-                    color: isActive ? 'var(--text-main)' : 'var(--text-secondary)',
-                    backgroundColor: isActive ? 'var(--surface-elevated)' : 'transparent',
-                    border: isActive ? '1px solid var(--teal-border)' : '1px solid transparent',
+                    color: isActive ? '#FFFFFF' : '#94A3B8',
+                    backgroundColor: isActive ? '#2B343D' : 'transparent',
+                    border: isActive ? '1px solid #33414E' : '1px solid transparent',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <Icon size={15} style={{ color: isActive ? 'var(--teal-primary)' : 'inherit' }} />
+                  <Icon size={15} style={{ color: isActive ? '#FFFFFF' : 'inherit' }} />
                   <span>{item.label}</span>
                   {item.badge && (
                     <span

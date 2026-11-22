@@ -10,10 +10,10 @@ export const MagicCard = ({
   className = '',
   style = {},
   gradientSize = 280,
-  gradientColor = 'rgba(15, 23, 42, 0.04)', // Pristine soft neutral spotlight glow
-  spotlightBorderColor = 'rgba(15, 23, 42, 0.16)',
-  borderColor = 'var(--border-subtle, #E2E8F0)',
-  backgroundColor = 'var(--surface-primary, #FFFFFF)',
+  gradientColor = 'rgba(255, 255, 255, 0.06)', // Soft spotlight glow on dark slate
+  spotlightBorderColor = 'rgba(255, 255, 255, 0.2)',
+  borderColor = 'var(--border-subtle, #33414E)',
+  backgroundColor = 'var(--surface-primary, #242C34)',
   borderRadius = 'var(--radius-md, 16px)',
   onClick,
   ...props

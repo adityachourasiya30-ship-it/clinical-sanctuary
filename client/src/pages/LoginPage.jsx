@@ -169,8 +169,8 @@ export const LoginPage = () => {
           width: '100%',
         }}
         borderRadius="var(--radius-lg)"
-        gradientColor="rgba(15, 23, 42, 0.04)"
-        spotlightBorderColor="rgba(15, 23, 42, 0.16)"
+        gradientColor="rgba(255, 255, 255, 0.06)"
+        spotlightBorderColor="rgba(255, 255, 255, 0.2)"
       >
         <div
           style={{

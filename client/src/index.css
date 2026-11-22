@@ -1,10 +1,10 @@
 @import './styles/index.css';
 
 :root {
-  --brand-blue: #FFFFFF;
-  --brand-blue-dark: #1E293B;
-  --brand-blue-soft: #F8FAFC;
+  --brand-blue: #2B343D;
+  --brand-blue-dark: #202427;
+  --brand-blue-soft: #242C34;
   --sos-red: #E11D48;
   --sos-red-dark: #BE123C;
-  --surface-bg: #F8FAFC;
+  --surface-bg: #202427;
 }

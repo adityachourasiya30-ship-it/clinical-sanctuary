@@ -74,19 +74,20 @@ export const UberResponseCard = ({
       className={isFloating ? '' : 'card-clean'}
       style={{
         margin: isFloating ? '0' : '1.25rem 0',
-        backgroundColor: isFloating ? 'rgba(255, 255, 255, 0.95)' : 'var(--surface-primary, #FFFFFF)',
+        backgroundColor: isFloating ? 'rgba(36, 44, 52, 0.95)' : 'var(--surface-primary, #242C34)',
         backdropFilter: isFloating ? 'blur(16px)' : undefined,
         WebkitBackdropFilter: isFloating ? 'blur(16px)' : undefined,
-        border: '1px solid #E2E8F0',
+        border: '1px solid #33414E',
         borderRadius: isFloating ? '24px' : 'var(--radius-md, 16px)',
         boxShadow: isFloating
-          ? '0 12px 40px rgba(0, 0, 0, 0.06)'
-          : '0 8px 30px rgba(0, 0, 0, 0.06)',
+          ? '0 12px 40px rgba(0, 0, 0, 0.35)'
+          : '0 8px 30px rgba(0, 0, 0, 0.25)',
         padding: isFloating ? '1rem 1.25rem' : '1.25rem',
         position: 'relative',
         overflow: 'hidden',
         maxHeight: isFloating ? '52vh' : undefined,
         overflowY: isFloating ? 'auto' : undefined,
+        color: '#FFFFFF',
       }}
     >
       {/* Top Banner indicating Uber-style status & Badges */}
@@ -98,7 +99,7 @@ export const UberResponseCard = ({
           flexWrap: 'wrap',
           gap: '0.65rem',
           paddingBottom: '0.85rem',
-          borderBottom: '1px solid var(--border-subtle, #E2E8F0)',
+          borderBottom: '1px solid #33414E',
           marginBottom: '0.85rem',
         }}
       >
@@ -109,10 +110,10 @@ export const UberResponseCard = ({
               height: '12px',
               borderRadius: '50%',
               backgroundColor: isArrived
-                ? '#059669'
+                ? '#10B981'
                 : isEnRoute
                 ? 'var(--sos-red, #E11D48)'
-                : '#0F172A',
+                : '#38BDF8',
               animation: 'emergency-pulse 1.3s infinite',
             }}
           />
@@ -121,7 +122,7 @@ export const UberResponseCard = ({
               style={{
                 fontSize: '0.7rem',
                 fontWeight: '800',
-                color: '#64748B',
+                color: '#94A3B8',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
               }}
@@ -132,7 +133,7 @@ export const UberResponseCard = ({
               style={{
                 fontSize: '1.05rem',
                 fontWeight: '900',
-                color: 'var(--text-main, #0F172A)',
+                color: '#FFFFFF',
                 letterSpacing: '-0.01em',
               }}
             >
@@ -146,27 +147,27 @@ export const UberResponseCard = ({
 
         {/* Status Badges: Pickup OTP & Live ETA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Pickup OTP Box in #F8FAFC with bold #0F172A monospace text */}
+          {/* Pickup OTP Box in #2B343D with bold #FFFFFF monospace text */}
           {incident.pickupOtp && (
             <div
               style={{
-                backgroundColor: '#F8FAFC',
-                border: '1.5px solid #E2E8F0',
+                backgroundColor: '#2B343D',
+                border: '1.5px solid #33414E',
                 borderRadius: '12px',
                 padding: '0.35rem 0.85rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
               }}
               title="Share this 4-digit code with the Paramedic upon arrival to verify response"
             >
-              <ShieldCheck size={16} color="#0F172A" />
+              <ShieldCheck size={16} color="#38BDF8" />
               <div>
                 <div
                   style={{
                     fontSize: '0.62rem',
-                    color: '#64748B',
+                    color: '#94A3B8',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     fontWeight: '800',
@@ -178,7 +179,7 @@ export const UberResponseCard = ({
                   style={{
                     fontSize: '1.05rem',
                     fontWeight: '900',
-                    color: '#0F172A',
+                    color: '#FFFFFF',
                     letterSpacing: '0.14em',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                     lineHeight: 1.1,
@@ -194,8 +195,8 @@ export const UberResponseCard = ({
           {(isEnRoute || isAssigned) && (
             <div
               style={{
-                backgroundColor: '#F8FAFC',
-                border: '1.5px solid #E2E8F0',
+                backgroundColor: '#2B343D',
+                border: '1.5px solid #33414E',
                 borderRadius: '12px',
                 padding: '0.35rem 0.8rem',
                 display: 'flex',
@@ -203,10 +204,10 @@ export const UberResponseCard = ({
                 gap: '0.45rem',
               }}
             >
-              <Clock size={16} color="#0F172A" />
+              <Clock size={16} color="#38BDF8" />
               <div>
-                <div style={{ fontSize: '0.62rem', color: '#64748B', fontWeight: '700' }}>Estimated Arrival</div>
-                <div style={{ fontSize: '0.92rem', fontWeight: '900', color: '#0F172A', lineHeight: 1.1 }}>
+                <div style={{ fontSize: '0.62rem', color: '#94A3B8', fontWeight: '700' }}>Estimated Arrival</div>
+                <div style={{ fontSize: '0.92rem', fontWeight: '900', color: '#FFFFFF', lineHeight: 1.1 }}>
                   {responder?.eta || '3 mins'} &bull; {responder?.distance || '850m away'}
                 </div>
               </div>
@@ -222,9 +223,9 @@ export const UberResponseCard = ({
                 padding: '0.35rem 0.75rem',
                 borderRadius: '999px',
                 backgroundColor:
-                  incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.08)',
-                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#2563EB' : '#0F172A',
-                border: `1.5px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.3)' : '#E2E8F0'}`,
+                  incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(225, 29, 72, 0.15)',
+                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#38BDF8' : '#E11D48',
+                border: `1.5px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(225, 29, 72, 0.35)'}`,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
@@ -343,17 +344,17 @@ export const UberResponseCard = ({
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.96rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
+                <span style={{ fontSize: '0.96rem', fontWeight: '800', color: '#FFFFFF' }}>
                   {responder.name || 'Officer Vikram Singh'}
                 </span>
                 <span title="Verified Emergency Responder" style={{ display: 'flex' }}>
-                  <ShieldCheck size={16} color="var(--teal-primary, #059669)" />
+                  <ShieldCheck size={16} color="#38BDF8" />
                 </span>
               </div>
-              <div style={{ fontSize: '0.76rem', color: 'var(--teal-primary, #059669)', fontWeight: '700' }}>
+              <div style={{ fontSize: '0.76rem', color: '#38BDF8', fontWeight: '700' }}>
                 {responder.vehicle || 'ALS Ambulance (DL-01-EM-402)'} &bull; {responder.badgeNumber || 'EMS-042'}
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
+              <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
                 {responder.rating || 'Verified Medical Service • Immediate Priority Clearance'}
               </div>
             </div>
@@ -374,9 +375,18 @@ export const UberResponseCard = ({
               type="button"
               onClick={handleCopyTrackLink}
               className="btn-secondary"
-              style={{ fontSize: '0.78rem', padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              style={{
+                fontSize: '0.78rem',
+                padding: '0.5rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                backgroundColor: '#202427',
+                border: '1px solid #33414E',
+                color: '#FFFFFF',
+              }}
             >
-              {copied ? <CheckCircle size={14} color="var(--status-success, #059669)" /> : <Share2 size={14} />}
+              {copied ? <CheckCircle size={14} color="#10B981" /> : <Share2 size={14} />}
               {copied ? 'Link Copied!' : 'Share Live GPS'}
             </button>
           </div>
@@ -392,7 +402,7 @@ export const UberResponseCard = ({
           flexWrap: 'wrap',
           gap: '0.65rem',
           paddingTop: '0.65rem',
-          borderTop: '1px solid var(--border-subtle, #E2E8F0)',
+          borderTop: '1px solid #33414E',
         }}
       >
         <button
@@ -400,9 +410,9 @@ export const UberResponseCard = ({
           onClick={handleSimulateNextStep}
           disabled={advancing}
           style={{
-            backgroundColor: 'var(--teal-subtle, rgba(5, 150, 105, 0.1))',
-            color: 'var(--teal-primary, #059669)',
-            border: '1px solid var(--teal-border, rgba(5, 150, 105, 0.25))',
+            backgroundColor: '#2B343D',
+            color: '#38BDF8',
+            border: '1px solid #33414E',
             borderRadius: '8px',
             padding: '0.45rem 0.85rem',
             fontSize: '0.76rem',
@@ -415,7 +425,7 @@ export const UberResponseCard = ({
           }}
           title="Advances the Uber lifecycle for testing without needing a second device"
         >
-          <Zap size={14} color="var(--teal-primary, #059669)" />
+          <Zap size={14} color="#38BDF8" />
           {advancing ? 'Updating Fleet Dispatch...' : (
             isSearching ? '⚡ Simulate Responder Match (Demo)' : (
               isAssigned ? '⚡ Start Driving (Switch to EN_ROUTE)' : (

@@ -370,7 +370,7 @@ export const DashboardPage = () => {
 
       {/* Universal Mobile Access Link Bar */}
       <div
-        className="bg-[#F8FAFC] border border-[#E2E8F0]"
+        className="bg-[#242C34] border border-[#33414E]"
         style={{
           borderRadius: 'var(--radius-sm)',
           padding: '0.65rem 1rem',
@@ -388,21 +388,21 @@ export const DashboardPage = () => {
               width: '28px',
               height: '28px',
               borderRadius: 'var(--radius-xs)',
-              backgroundColor: '#F1F5F9',
+              backgroundColor: '#2B343D',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Smartphone size={16} color="#0F172A" />
+            <Smartphone size={16} color="#FFFFFF" />
           </div>
           <div>
-            <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-main)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-main, #FFFFFF)' }}>
               Open on Mobile Device
             </div>
-            <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #94A3B8)' }}>
               Connected to WiFi or Hotspot? Access ClinicalGuard at:{' '}
-              <strong style={{ color: '#0F172A', fontFamily: 'var(--font-mono)' }}>
+              <strong style={{ color: '#FFFFFF', fontFamily: 'var(--font-mono)' }}>
                 {mobileUrl}
               </strong>
             </div>
@@ -415,13 +415,13 @@ export const DashboardPage = () => {
             navigator.clipboard.writeText(mobileUrl);
             setStatusMessage(`Mobile link copied: ${mobileUrl}`);
           }}
-          className="bg-[#0F172A] hover:bg-slate-800 text-white"
+          className="bg-[#2B343D] hover:bg-[#333F4A] text-white border border-[#33414E]"
           style={{
             fontSize: '0.74rem',
             padding: '0.45rem 0.9rem',
-            backgroundColor: '#0F172A',
+            backgroundColor: '#2B343D',
             color: '#FFFFFF',
-            border: 'none',
+            border: '1px solid #33414E',
             borderRadius: '8px',
             fontWeight: '700',
             cursor: 'pointer',
@@ -507,18 +507,19 @@ export const DashboardPage = () => {
             <div
               style={{
                 pointerEvents: 'auto',
-                backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                backgroundColor: 'rgba(36, 44, 52, 0.94)',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                border: '1.5px solid #33414E',
                 padding: '0.45rem 0.95rem',
                 borderRadius: '999px',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 fontSize: '0.8rem',
                 fontWeight: '700',
+                color: '#FFFFFF',
               }}
             >
               <span
@@ -531,11 +532,11 @@ export const DashboardPage = () => {
                 }}
               />
               <span>Live Emergency:</span>
-              <strong style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}>
+              <strong style={{ fontFamily: 'var(--font-mono)', color: '#FFFFFF' }}>
                 {activeIncident.incidentCode}
               </strong>
-              <span style={{ color: 'var(--border-subtle)' }}>&bull;</span>
-              <span style={{ color: 'var(--teal-primary)' }}>{activeIncident.status}</span>
+              <span style={{ color: '#64748B' }}>&bull;</span>
+              <span style={{ color: '#38BDF8' }}>{activeIncident.status}</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'auto' }}>
@@ -543,10 +544,10 @@ export const DashboardPage = () => {
                 to={`/track/${activeIncident.incidentCode}`}
                 target="_blank"
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                  backgroundColor: 'rgba(36, 44, 52, 0.94)',
                   backdropFilter: 'blur(12px)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--teal-primary)',
+                  border: '1px solid #33414E',
+                  color: '#38BDF8',
                   fontWeight: '700',
                   fontSize: '0.75rem',
                   padding: '0.45rem 0.85rem',
@@ -554,7 +555,7 @@ export const DashboardPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
                 }}
               >
                 Public Track <ExternalLink size={12} />
@@ -564,16 +565,16 @@ export const DashboardPage = () => {
                 type="button"
                 onClick={() => handleCancelEmergency(activeIncident._id, 'False Alarm / Accidental')}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                  backgroundColor: 'rgba(36, 44, 52, 0.94)',
                   backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(225, 29, 72, 0.3)',
+                  border: '1px solid rgba(225, 29, 72, 0.45)',
                   color: '#E11D48',
                   fontWeight: '700',
                   fontSize: '0.75rem',
                   padding: '0.45rem 0.85rem',
                   borderRadius: '999px',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
                 }}
               >
                 Cancel SOS
@@ -610,7 +611,7 @@ export const DashboardPage = () => {
             style={{
               textAlign: 'center',
               padding: '2rem 1.5rem',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-primary)',
               borderRadius: '24px',
               border: '1px solid var(--border-subtle)',
               boxShadow: 'var(--shadow-sm)',

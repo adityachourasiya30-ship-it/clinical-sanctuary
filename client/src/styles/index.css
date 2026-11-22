@@ -1,49 +1,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  /* Pristine White & Light Neutrals with High-Contrast Dark Slate Accents */
-  --brand-blue: #FFFFFF;
-  --brand-blue-dark: #1E293B;  /* High-contrast dark slate text */
-  --brand-blue-soft: #F8FAFC;  /* Soft off-white surface */
-  --brand-blue-subtle: rgba(248, 250, 252, 0.8);
-  --brand-blue-border: #E2E8F0;
-  --brand-blue-glow: rgba(15, 23, 42, 0.06);
+  /* Dark Gunmetal Slate Palette (Matching Screenshot UI) */
+  --surface-bg: #202427;       /* Dark Gunmetal Canvas */
+  --bg-main: var(--surface-bg);
+  --surface-primary: #242C34;  /* Elevated Slate Card & Navbar */
+  --surface-elevated: #2B343D; /* Active Tab Pill & Controls */
+  --surface-hover: #333F4A;
 
+  --brand-blue: #2B343D;
+  --brand-blue-dark: #202427;
+  --brand-blue-soft: #242C34;
+  --brand-blue-subtle: rgba(43, 52, 61, 0.7);
+  --brand-blue-border: #33414E;
+  --brand-blue-glow: rgba(43, 52, 61, 0.4);
+
+  /* Emergency Red Accents (Preserved as requested: "and also red colors") */
   --sos-red: #E11D48;          /* Primary SOS button, critical emergency badges, and ripple waves */
   --sos-red-dark: #BE123C;
-  --sos-red-subtle: rgba(225, 29, 72, 0.1);
-  --sos-red-glow: rgba(225, 29, 72, 0.35);
-
-  --surface-bg: #F8FAFC;       /* Clean light canvas */
-  --bg-main: var(--surface-bg);
-  --surface-primary: #FFFFFF;  /* Crisp Elevated White Card */
-  --surface-elevated: #F8FAFC; /* Soft Slate Tint */
-  --surface-hover: #F1F5F9;
-
-  /* High-Contrast Neutral Action Controls */
-  --teal-primary: #0F172A;
-  --teal-hover: #1E293B;
-  --teal-subtle: #F1F5F9;
-  --teal-border: #E2E8F0;
+  --sos-red-subtle: rgba(225, 29, 72, 0.16);
+  --sos-red-glow: rgba(225, 29, 72, 0.45);
 
   --coral-emergency: var(--sos-red);
   --coral-hover: var(--sos-red-dark);
   --coral-subtle: var(--sos-red-subtle);
   --coral-glow: var(--sos-red-glow);
 
-  --text-main: #0F172A;        /* Deep Slate (Optimal High-Readability Contrast) */
-  --text-secondary: #475569;   /* Slate Gray */
+  /* Controls & Action Buttons */
+  --teal-primary: #2B343D;
+  --teal-hover: #333F4A;
+  --teal-subtle: rgba(43, 52, 61, 0.85);
+  --teal-border: #33414E;
+
+  /* Typography on Dark Slate */
+  --text-main: #FFFFFF;        /* Crisp White */
+  --text-secondary: #94A3B8;   /* Slate Gray */
   --text-muted: #64748B;
 
-  --border-subtle: #E2E8F0;    /* Soft Slate Border */
-  --border-focus: #CBD5E1;
+  /* Subtle Borders */
+  --border-subtle: #33414E;
+  --border-focus: #475569;
 
-  --status-success: #059669;
-  --status-success-bg: rgba(5, 150, 105, 0.08);
-  --status-warning: #D97706;
-  --status-warning-bg: rgba(217, 119, 6, 0.1);
+  --status-success: #10B981;
+  --status-success-bg: rgba(16, 185, 129, 0.15);
+  --status-warning: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.15);
   --status-error: var(--sos-red);
-  --status-info: #0284C7;
+  --status-info: #38BDF8;
 
   --radius-xs: 6px;
   --radius-sm: 10px;
@@ -199,7 +202,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background-color: var(--teal-primary);
   color: #FFFFFF;
   font-weight: 700;
-  border: none;
+  border: 1px solid var(--teal-border);
   border-radius: var(--radius-sm);
   padding: 0.6rem 1.15rem;
   cursor: pointer;
