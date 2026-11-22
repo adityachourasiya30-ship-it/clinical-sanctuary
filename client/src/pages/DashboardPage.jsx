@@ -370,9 +370,8 @@ export const DashboardPage = () => {
 
       {/* Universal Mobile Access Link Bar */}
       <div
+        className="bg-[#F8FAFC] border border-[#E2E8F0]"
         style={{
-          backgroundColor: 'rgba(25, 182, 164, 0.08)',
-          border: '1px solid var(--teal-border)',
           borderRadius: 'var(--radius-sm)',
           padding: '0.65rem 1rem',
           marginBottom: '1rem',
@@ -389,13 +388,13 @@ export const DashboardPage = () => {
               width: '28px',
               height: '28px',
               borderRadius: 'var(--radius-xs)',
-              backgroundColor: 'var(--teal-subtle)',
+              backgroundColor: '#F1F5F9',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Smartphone size={16} color="var(--teal-primary)" />
+            <Smartphone size={16} color="#0F172A" />
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-main)' }}>
@@ -403,7 +402,7 @@ export const DashboardPage = () => {
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
               Connected to WiFi or Hotspot? Access ClinicalGuard at:{' '}
-              <strong style={{ color: 'var(--teal-primary)', fontFamily: 'var(--font-mono)' }}>
+              <strong style={{ color: '#0F172A', fontFamily: 'var(--font-mono)' }}>
                 {mobileUrl}
               </strong>
             </div>
@@ -416,8 +415,18 @@ export const DashboardPage = () => {
             navigator.clipboard.writeText(mobileUrl);
             setStatusMessage(`Mobile link copied: ${mobileUrl}`);
           }}
-          className="btn-teal"
-          style={{ fontSize: '0.74rem', padding: '0.35rem 0.8rem' }}
+          className="bg-[#0F172A] hover:bg-slate-800 text-white"
+          style={{
+            fontSize: '0.74rem',
+            padding: '0.45rem 0.9rem',
+            backgroundColor: '#0F172A',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s ease',
+          }}
         >
           Copy Phone Link
         </button>

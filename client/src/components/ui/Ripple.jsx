@@ -36,8 +36,8 @@ export const Ripple = ({
         const animationDelay = `${i * 0.3}s`;
         const duration = active ? '2.4s' : '3.6s';
 
-        // Alternating concentric red (#E11D48) and subtle steel-blue (#3D789E) radar rings
-        const ringRgb = color || (i % 2 === 0 ? '225, 29, 72' : '61, 120, 158');
+        // Alternating concentric red (#E11D48) and soft neutral (#E2E8F0) radar rings
+        const ringRgb = color || (i % 2 === 0 ? '225, 29, 72' : '226, 232, 240');
 
         return (
           <div

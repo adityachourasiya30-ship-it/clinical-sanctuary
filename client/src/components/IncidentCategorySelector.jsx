@@ -36,7 +36,7 @@ const CATEGORIES = [
     eta: '~3-4m',
     unitType: 'Rapid Patrol',
     icon: ShieldAlert,
-    accent: '#3D789E',
+    accent: '#0F172A',
   },
   {
     id: 'POLICE',

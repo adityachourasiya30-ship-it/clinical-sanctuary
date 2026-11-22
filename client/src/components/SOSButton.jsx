@@ -28,7 +28,7 @@ export const SOSButton = ({ onTrigger, loading, disabled, activeEmergency }) => 
           justifyContent: 'center',
         }}
       >
-        {/* Magic UI Concentric Outward-Expanding Radar Rings (Alternating Red #E11D48 + Steel Blue #3D789E) */}
+        {/* Magic UI Concentric Outward-Expanding Radar Rings (Alternating Emergency Red #E11D48 + Neutral #E2E8F0) */}
         {!disabled && (
           <Ripple
             mainCircleSize={165}

@@ -38,17 +38,34 @@ const RouteFitter = ({ polyline }) => {
   return null;
 };
 
-// Custom user pulsing marker icon
+// Origin Dispatch Station Marker icon
+const originIcon = L.divIcon({
+  className: 'custom-origin-marker',
+  html: `
+    <div style="position: relative; width: 28px; height: 28px;">
+      <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: #0F172A; border: 2.5px solid #ffffff; box-shadow: 0 2px 10px rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 800;">
+        S
+      </div>
+      <div style="position: absolute; width: 44px; height: 44px; top: -8px; left: -8px; border-radius: 50%; background: rgba(15,23,42,0.12); animation: pulse 2.2s infinite; pointer-events: none;"></div>
+    </div>
+  `,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
+
+// Custom user pulsing marker icon (Citizen / Rendezvous Point)
 const userIcon = L.divIcon({
   className: 'custom-user-marker',
   html: `
-    <div style="position: relative; width: 26px; height: 26px;">
-      <div style="position: absolute; width: 26px; height: 26px; border-radius: 50%; background: #ef4444; border: 3px solid #ffffff; box-shadow: 0 0 12px rgba(239,68,68,0.85);"></div>
-      <div style="position: absolute; width: 48px; height: 48px; top: -11px; left: -11px; border-radius: 50%; background: rgba(239,68,68,0.3); animation: pulse 2s infinite;"></div>
+    <div style="position: relative; width: 32px; height: 32px;">
+      <div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: #E11D48; border: 3px solid #ffffff; box-shadow: 0 0 16px rgba(225,29,72,0.9); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+        📍
+      </div>
+      <div style="position: absolute; width: 54px; height: 54px; top: -11px; left: -11px; border-radius: 50%; background: rgba(225,29,72,0.25); animation: pulse 1.8s infinite; pointer-events: none;"></div>
     </div>
   `,
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
 // Custom Hospital marker icon
@@ -63,19 +80,19 @@ const hospitalIcon = L.divIcon({
   iconAnchor: [14, 14],
 });
 
-// Uber-style Responder / Ambulance marker icon
+// Uber-style Responder / Ambulance marker icon (High-contrast moving unit)
 const responderIcon = L.divIcon({
   className: 'custom-responder-marker',
   html: `
-    <div style="position: relative; width: 38px; height: 38px;">
-      <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: #3D789E; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 18px rgba(61,120,158,0.9); font-size: 20px;">
+    <div style="position: relative; width: 40px; height: 40px;">
+      <div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: #0F172A; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 18px rgba(15,23,42,0.45); font-size: 21px;">
         🚑
       </div>
-      <div style="position: absolute; width: 56px; height: 56px; top: -9px; left: -9px; border-radius: 50%; background: rgba(61,120,158,0.3); animation: pulse 1.6s infinite; pointer-events: none;"></div>
+      <div style="position: absolute; width: 60px; height: 60px; top: -10px; left: -10px; border-radius: 50%; background: rgba(15,23,42,0.14); animation: pulse 1.5s infinite; pointer-events: none;"></div>
     </div>
   `,
-  iconSize: [38, 38],
-  iconAnchor: [19, 19],
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
 });
 
 export const EmergencyMap = ({
@@ -313,25 +330,37 @@ export const EmergencyMap = ({
             <Polyline
               positions={routePolyline}
               pathOptions={{
-                color: '#3D789E',
-                weight: 7,
-                opacity: 0.35,
+                color: '#38BDF8',
+                weight: 8,
+                opacity: 0.45,
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
             />
-            {/* Inner crisp line */}
+            {/* Inner crisp high-contrast road line */}
             <Polyline
               positions={routePolyline}
               pathOptions={{
-                color: routeTelemetry.isFallback ? '#f59e0b' : '#3D789E',
-                weight: 3.5,
+                color: routeTelemetry.isFallback ? '#F59E0B' : '#0F172A',
+                weight: 4,
                 opacity: 0.95,
                 dashArray: routeTelemetry.isFallback ? '8, 8' : undefined,
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
             />
+
+            {/* Origin station pin at route start */}
+            {routePolyline[0] && (
+              <Marker position={routePolyline[0]} icon={originIcon}>
+                <Popup>
+                  <div style={{ padding: '4px', fontSize: '11px', color: '#0F172A' }}>
+                    <strong style={{ display: 'block', marginBottom: '2px' }}>🚨 Dispatch Origin Point</strong>
+                    <span>Response unit dispatched from here</span>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
           </>
         )}
 
@@ -367,12 +396,12 @@ export const EmergencyMap = ({
           <Marker position={animatedPos} icon={responderIcon}>
             <Popup>
               <div style={{ padding: '6px' }}>
-                <strong style={{ display: 'block', color: '#3D789E', marginBottom: '2px' }}>
+                <strong style={{ display: 'block', color: '#0F172A', marginBottom: '2px' }}>
                   🚑 {responderInfo.vehicle || 'ALS Ambulance'}
                 </strong>
-                <div style={{ fontSize: '11px', color: '#f8fafc', fontWeight: '600' }}>
+                <div style={{ fontSize: '11px', color: '#0F172A', fontWeight: '600' }}>
                   {responderInfo.name} &bull;{' '}
-                  <span style={{ color: isTier1 ? '#60A5FA' : '#3D789E' }}>
+                  <span style={{ color: isTier1 ? '#2563EB' : '#0F172A' }}>
                     {isTier1 ? 'Tier 1 Transport' : 'Tier 2 Medical'}
                   </span>
                 </div>
@@ -487,8 +516,8 @@ export const EmergencyMap = ({
           Patient
         </span>
         {initialResponderPos && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3D789E', fontWeight: '700' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3D789E' }} />
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0F172A', fontWeight: '700' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0F172A' }} />
             Ambulance
           </span>
         )}
@@ -507,18 +536,19 @@ export const EmergencyMap = ({
             left: '12px',
             right: '12px',
             zIndex: 1000,
-            backgroundColor: 'rgba(8, 22, 18, 0.94)',
-            backdropFilter: 'blur(10px)',
-            border: '1.5px solid var(--teal-primary)',
-            borderRadius: '10px',
-            padding: '0.75rem 1rem',
-            boxShadow: '0 10px 35px rgba(0, 0, 0, 0.55)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid #E2E8F0',
+            borderRadius: '24px',
+            padding: '0.75rem 1.15rem',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.06)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '0.75rem',
-            color: '#FFFFFF',
+            color: '#0F172A',
           }}
         >
           {/* Left: Responder Details */}
@@ -528,8 +558,8 @@ export const EmergencyMap = ({
                 width: '40px',
                 height: '40px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(25, 182, 164, 0.2)',
-                border: '2px solid var(--teal-primary)',
+                backgroundColor: '#F1F5F9',
+                border: '1.5px solid #E2E8F0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -541,7 +571,7 @@ export const EmergencyMap = ({
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.92rem', fontWeight: '800', color: '#FFFFFF' }}>
+                <span style={{ fontSize: '0.92rem', fontWeight: '800', color: '#0F172A' }}>
                   {responderInfo.name}
                 </span>
                 <span
@@ -550,9 +580,9 @@ export const EmergencyMap = ({
                     fontWeight: '800',
                     padding: '2px 7px',
                     borderRadius: '999px',
-                    backgroundColor: isTier1 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(25, 182, 164, 0.2)',
-                    color: isTier1 ? '#60A5FA' : 'var(--teal-primary)',
-                    border: `1px solid ${isTier1 ? 'rgba(59, 130, 246, 0.4)' : 'var(--teal-border)'}`,
+                    backgroundColor: isTier1 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.08)',
+                    color: isTier1 ? '#2563EB' : '#0F172A',
+                    border: isTier1 ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid #E2E8F0',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.25rem',
@@ -562,9 +592,9 @@ export const EmergencyMap = ({
                   {isTier1 ? 'Tier 1 Transport' : 'Tier 2 Medical ALS'}
                 </span>
               </div>
-              <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '0.73rem', color: '#64748B' }}>
                 {responderInfo.vehicle} &bull;{' '}
-                <span style={{ color: 'var(--text-muted)' }}>{responderInfo.badgeNumber || 'EMS-Active'}</span>
+                <span style={{ color: '#94A3B8' }}>{responderInfo.badgeNumber || 'EMS-Active'}</span>
               </div>
             </div>
           </div>
@@ -573,17 +603,17 @@ export const EmergencyMap = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <div
               style={{
-                backgroundColor: 'var(--surface-elevated)',
-                border: '1px solid var(--teal-primary)',
-                borderRadius: '6px',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '8px',
                 padding: '0.35rem 0.7rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
               }}
             >
-              <Clock size={14} color="var(--teal-primary)" />
-              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--teal-primary)' }}>
+              <Clock size={14} color="#0F172A" />
+              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0F172A' }}>
                 {status === 'ARRIVED'
                   ? '📍 On Scene (Arrived)'
                   : `${routeTelemetry.distanceKm} km • ~${routeTelemetry.durationMins} mins ETA`}
@@ -593,11 +623,11 @@ export const EmergencyMap = ({
             <span
               style={{
                 fontSize: '0.66rem',
-                color: 'var(--text-muted)',
+                color: '#64748B',
                 padding: '0.25rem 0.5rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '4px',
-                border: '1px solid var(--border-subtle)',
+                backgroundColor: '#F1F5F9',
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
               }}
               title="Real-time road coordinates provided by Project OSRM"
             >
@@ -610,9 +640,9 @@ export const EmergencyMap = ({
             {pickupPin && (
               <div
                 style={{
-                  backgroundColor: 'rgba(25, 182, 164, 0.15)',
-                  border: '1px solid var(--teal-primary)',
-                  borderRadius: '6px',
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
                   padding: '0.3rem 0.65rem',
                   textAlign: 'center',
                 }}
@@ -621,7 +651,7 @@ export const EmergencyMap = ({
                 <div
                   style={{
                     fontSize: '0.58rem',
-                    color: 'var(--text-secondary)',
+                    color: '#64748B',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                   }}
@@ -632,7 +662,7 @@ export const EmergencyMap = ({
                   style={{
                     fontSize: '0.95rem',
                     fontWeight: '900',
-                    color: '#FFFFFF',
+                    color: '#0F172A',
                     letterSpacing: '0.12em',
                     fontFamily: 'var(--font-mono)',
                   }}
@@ -647,7 +677,10 @@ export const EmergencyMap = ({
               className="btn-teal"
               style={{
                 fontSize: '0.78rem',
-                padding: '0.45rem 0.8rem',
+                padding: '0.45rem 0.85rem',
+                backgroundColor: '#0F172A',
+                color: '#FFFFFF',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',

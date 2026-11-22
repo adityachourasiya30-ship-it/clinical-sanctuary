@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  /* Custom Steel Blue (#3D789E) + Emergency Crimson Red (#E11D48) Palette */
-  --brand-blue: #3D789E;       /* Primary trust, navigation, responder headers, OSRM map polyline, and badges */
-  --brand-blue-dark: #2B5876;  /* Hover states and high-contrast text */
-  --brand-blue-soft: #EDF4F8;  /* Soft tinted pill backgrounds and OTP boxes */
-  --brand-blue-subtle: rgba(61, 120, 158, 0.12);
-  --brand-blue-border: rgba(61, 120, 158, 0.28);
-  --brand-blue-glow: rgba(61, 120, 158, 0.35);
+  /* Pristine White & Light Neutrals with High-Contrast Dark Slate Accents */
+  --brand-blue: #FFFFFF;
+  --brand-blue-dark: #1E293B;  /* High-contrast dark slate text */
+  --brand-blue-soft: #F8FAFC;  /* Soft off-white surface */
+  --brand-blue-subtle: rgba(248, 250, 252, 0.8);
+  --brand-blue-border: #E2E8F0;
+  --brand-blue-glow: rgba(15, 23, 42, 0.06);
 
   --sos-red: #E11D48;          /* Primary SOS button, critical emergency badges, and ripple waves */
   --sos-red-dark: #BE123C;
@@ -20,11 +20,11 @@
   --surface-elevated: #F8FAFC; /* Soft Slate Tint */
   --surface-hover: #F1F5F9;
 
-  /* Aliasing legacy theme tokens to our custom Steel Blue + SOS Red palette */
-  --teal-primary: var(--brand-blue);
-  --teal-hover: var(--brand-blue-dark);
-  --teal-subtle: var(--brand-blue-subtle);
-  --teal-border: var(--brand-blue-border);
+  /* High-Contrast Neutral Action Controls */
+  --teal-primary: #0F172A;
+  --teal-hover: #1E293B;
+  --teal-subtle: #F1F5F9;
+  --teal-border: #E2E8F0;
 
   --coral-emergency: var(--sos-red);
   --coral-hover: var(--sos-red-dark);
@@ -38,12 +38,12 @@
   --border-subtle: #E2E8F0;    /* Soft Slate Border */
   --border-focus: #CBD5E1;
 
-  --status-success: var(--brand-blue);
-  --status-success-bg: var(--brand-blue-subtle);
+  --status-success: #059669;
+  --status-success-bg: rgba(5, 150, 105, 0.08);
   --status-warning: #D97706;
   --status-warning-bg: rgba(217, 119, 6, 0.1);
   --status-error: var(--sos-red);
-  --status-info: var(--brand-blue);
+  --status-info: #0284C7;
 
   --radius-xs: 6px;
   --radius-sm: 10px;
@@ -150,6 +150,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: #F8FAFC !important;
   font-family: var(--font-sans) !important;
   z-index: 10;
+}
+
+.leaflet-tile-pane {
+  filter: contrast(102%) brightness(98%) saturate(92%);
 }
 
 /* Crisp Clean Leaflet Popups */

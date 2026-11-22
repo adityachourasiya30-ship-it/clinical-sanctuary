@@ -12,8 +12,8 @@ export const AnimatedBeam = ({
   endX = 100,
   endY = 20,
   curvature = 0,
-  gradientStartColor = '#3D789E', // Steel Blue
-  gradientStopColor = '#E11D48',  // Emergency Crimson Red
+  gradientStartColor = '#0F172A', // Dark Slate / Charcoal
+  gradientStopColor = '#E11D48',  // Emergency Crimson Red Heartbeat
   pathColor = 'rgba(226, 232, 240, 0.8)',
   pathWidth = 2,
   duration = 2.4,
@@ -118,8 +118,8 @@ export const TelemetrySyncBeam = ({
         width: '100%',
         padding: '0.85rem 1rem',
         borderRadius: '16px',
-        backgroundColor: 'rgba(237, 244, 248, 0.75)', // --brand-blue-soft
-        border: '1px solid rgba(61, 120, 158, 0.22)',
+        backgroundColor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
         overflow: 'hidden',
       }}
     >
@@ -135,17 +135,15 @@ export const TelemetrySyncBeam = ({
           zIndex: 1,
         }}
       >
-        {/* Animated glowing telemetry beam (#3D789E to #E11D48) */}
+        {/* Subtle pulsing dark-charcoal animated telemetry line */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: isEnRoute
-              ? 'linear-gradient(90deg, #E11D48, #3D789E, #2B5876)'
-              : 'linear-gradient(90deg, #3D789E, #2B5876, #3D789E)',
+            background: 'linear-gradient(90deg, #0F172A, #334155, #64748B, #0F172A)',
             backgroundSize: '200% 100%',
-            animation: 'telemetry-gradient-slide 2s linear infinite',
-            opacity: isAssigned ? 1 : 0.45,
+            animation: 'telemetry-gradient-slide 2.4s linear infinite',
+            opacity: isAssigned ? 0.8 : 0.35,
           }}
         />
       </div>
@@ -160,7 +158,7 @@ export const TelemetrySyncBeam = ({
           justifyContent: 'space-between',
         }}
       >
-        {/* Node 1: Citizen GPS */}
+        {/* Node 1: Citizen GPS (Clean Dark Slate/Charcoal) */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '30%' }}>
           <div
             style={{
@@ -168,12 +166,12 @@ export const TelemetrySyncBeam = ({
               height: '42px',
               borderRadius: '50%',
               backgroundColor: '#FFFFFF',
-              border: '2px solid #E11D48',
-              boxShadow: '0 0 14px rgba(225, 29, 72, 0.28)',
+              border: '2px solid #0F172A',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#E11D48',
+              color: '#0F172A',
               marginBottom: '0.4rem',
               position: 'relative',
             }}
@@ -184,11 +182,11 @@ export const TelemetrySyncBeam = ({
                 position: 'absolute',
                 top: '-2px',
                 right: '-2px',
-                width: '10px',
-                height: '10px',
+                width: '8px',
+                height: '8px',
                 borderRadius: '50%',
-                backgroundColor: '#E11D48',
-                border: '2px solid #FFFFFF',
+                backgroundColor: '#0F172A',
+                border: '1.5px solid #FFFFFF',
               }}
             />
           </div>
@@ -200,7 +198,7 @@ export const TelemetrySyncBeam = ({
           </span>
         </div>
 
-        {/* Node 2: Live Dispatch */}
+        {/* Node 2: Live Dispatch (Soft Crimson/Red Heartbeat Marker #E11D48) */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '30%' }}>
           <div
             style={{
@@ -208,12 +206,12 @@ export const TelemetrySyncBeam = ({
               height: '42px',
               borderRadius: '50%',
               backgroundColor: '#FFFFFF',
-              border: '2px solid #3D789E',
-              boxShadow: '0 0 14px rgba(61, 120, 158, 0.3)',
+              border: '2px solid #E11D48',
+              boxShadow: '0 0 14px rgba(225, 29, 72, 0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#3D789E',
+              color: '#E11D48',
               marginBottom: '0.4rem',
               position: 'relative',
             }}
@@ -227,35 +225,34 @@ export const TelemetrySyncBeam = ({
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: '#3D789E',
+                backgroundColor: '#E11D48',
                 border: '2px solid #FFFFFF',
+                animation: 'emergency-pulse 1.4s infinite',
               }}
             />
           </div>
           <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
             Live Dispatch
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#3D789E', fontWeight: '700' }}>
-            OSRM Sync Active
+          <span style={{ fontSize: '0.68rem', color: '#E11D48', fontWeight: '700' }}>
+            ● Telemetry Active
           </span>
         </div>
 
-        {/* Node 3: Responder Unit */}
+        {/* Node 3: Responder Unit (Clean Dark Charcoal) */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '30%' }}>
           <div
             style={{
               width: '42px',
               height: '42px',
               borderRadius: '50%',
-              backgroundColor: isArrived ? '#3D789E' : '#FFFFFF',
-              border: `2px solid ${isArrived ? '#3D789E' : '#2B5876'}`,
-              boxShadow: isArrived
-                ? '0 0 14px rgba(61, 120, 158, 0.35)'
-                : '0 0 14px rgba(43, 88, 118, 0.25)',
+              backgroundColor: isArrived ? '#0F172A' : '#FFFFFF',
+              border: '2px solid #0F172A',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: isArrived ? '#FFFFFF' : '#3D789E',
+              color: isArrived ? '#FFFFFF' : '#0F172A',
               marginBottom: '0.4rem',
               position: 'relative',
             }}
@@ -266,19 +263,19 @@ export const TelemetrySyncBeam = ({
                 position: 'absolute',
                 top: '-2px',
                 right: '-2px',
-                width: '10px',
-                height: '10px',
+                width: '8px',
+                height: '8px',
                 borderRadius: '50%',
-                backgroundColor: isArrived ? '#3D789E' : '#2B5876',
-                border: '2px solid #FFFFFF',
+                backgroundColor: isArrived ? '#059669' : '#334155',
+                border: '1.5px solid #FFFFFF',
               }}
             />
           </div>
           <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
             {isArrived ? 'On Scene' : isEnRoute ? `En Route (${eta})` : 'Assigned Unit'}
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#3D789E', fontWeight: '700' }}>
-            {responderTier === 'TIER_2_MEDICAL' ? 'Tier 2 Medical' : 'Tier 1 Transport'}
+          <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: '600' }}>
+            {responderTier === 'TIER_1_TRANSPORT' ? 'Tier 1 Transport' : 'Tier 2 Medical ALS'}
           </span>
         </div>
       </div>

@@ -814,8 +814,8 @@ export const ResponderPage = () => {
                   return (
                     <MagicCard
                       key={inc._id}
-                      gradientColor={isTier2Required ? 'rgba(225, 29, 72, 0.14)' : 'rgba(61, 120, 158, 0.14)'}
-                      spotlightBorderColor={isTier2Required ? 'rgba(225, 29, 72, 0.45)' : 'rgba(61, 120, 158, 0.45)'}
+                      gradientColor={isTier2Required ? 'rgba(225, 29, 72, 0.14)' : 'rgba(15, 23, 42, 0.05)'}
+                      spotlightBorderColor={isTier2Required ? 'rgba(225, 29, 72, 0.45)' : 'rgba(15, 23, 42, 0.2)'}
                       borderRadius="var(--radius-sm)"
                       backgroundColor="var(--surface-elevated)"
                     >
@@ -919,13 +919,13 @@ export const ResponderPage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Impact Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <MagicCard gradientColor="rgba(61, 120, 158, 0.14)" spotlightBorderColor="rgba(61, 120, 158, 0.45)">
+            <MagicCard gradientColor="rgba(15, 23, 42, 0.04)" spotlightBorderColor="rgba(15, 23, 42, 0.16)">
               <div style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                     Rescues Completed
                   </span>
-                  <Award size={18} color="var(--brand-blue, #3D789E)" />
+                  <Award size={18} color="#0F172A" />
                 </div>
                 <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--text-main)' }}>
                   {profile?.completedRescues || 0}
@@ -953,15 +953,15 @@ export const ResponderPage = () => {
               </div>
             </MagicCard>
 
-            <MagicCard gradientColor="rgba(61, 120, 158, 0.14)" spotlightBorderColor="rgba(61, 120, 158, 0.45)">
+            <MagicCard gradientColor="rgba(15, 23, 42, 0.04)" spotlightBorderColor="rgba(15, 23, 42, 0.16)">
               <div style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                     Hospital Handover Credits
                   </span>
-                  <ShieldCheck size={18} color="var(--brand-blue, #3D789E)" />
+                  <ShieldCheck size={18} color="#059669" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--brand-blue, #3D789E)' }}>
+                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: '#059669' }}>
                   {profile?.referralCredits || 0}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -973,9 +973,9 @@ export const ResponderPage = () => {
 
           {/* Certificate Download Card */}
           <MagicCard
-            gradientColor="rgba(61, 120, 158, 0.16)"
-            spotlightBorderColor="var(--brand-blue, #3D789E)"
-            borderColor="var(--brand-blue, #3D789E)"
+            gradientColor="rgba(15, 23, 42, 0.04)"
+            spotlightBorderColor="rgba(15, 23, 42, 0.18)"
+            borderColor="var(--border-subtle)"
             style={{
               boxShadow: 'var(--shadow-md)',
             }}
