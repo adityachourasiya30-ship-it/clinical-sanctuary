@@ -1,0 +1,10 @@
+@import './styles/index.css';
+
+:root {
+  --brand-blue: #3D789E;
+  --brand-blue-dark: #2B5876;
+  --brand-blue-soft: #EDF4F8;
+  --sos-red: #E11D48;
+  --sos-red-dark: #BE123C;
+  --surface-bg: #F8FAFC;
+}

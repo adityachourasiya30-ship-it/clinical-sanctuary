@@ -1,21 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  /* Calm Human-Centric Emergency Design System */
-  --bg-main: #FAF9F6;          /* Warm Alabaster Off-White */
+  /* Custom Steel Blue (#3D789E) + Emergency Crimson Red (#E11D48) Palette */
+  --brand-blue: #3D789E;       /* Primary trust, navigation, responder headers, OSRM map polyline, and badges */
+  --brand-blue-dark: #2B5876;  /* Hover states and high-contrast text */
+  --brand-blue-soft: #EDF4F8;  /* Soft tinted pill backgrounds and OTP boxes */
+  --brand-blue-subtle: rgba(61, 120, 158, 0.12);
+  --brand-blue-border: rgba(61, 120, 158, 0.28);
+  --brand-blue-glow: rgba(61, 120, 158, 0.35);
+
+  --sos-red: #E11D48;          /* Primary SOS button, critical emergency badges, and ripple waves */
+  --sos-red-dark: #BE123C;
+  --sos-red-subtle: rgba(225, 29, 72, 0.1);
+  --sos-red-glow: rgba(225, 29, 72, 0.35);
+
+  --surface-bg: #F8FAFC;       /* Clean light canvas */
+  --bg-main: var(--surface-bg);
   --surface-primary: #FFFFFF;  /* Crisp Elevated White Card */
   --surface-elevated: #F8FAFC; /* Soft Slate Tint */
   --surface-hover: #F1F5F9;
 
-  --teal-primary: #059669;     /* Calm Sage Emerald (Safe / Active Help) */
-  --teal-hover: #047857;
-  --teal-subtle: rgba(5, 150, 105, 0.1);
-  --teal-border: rgba(5, 150, 105, 0.25);
+  /* Aliasing legacy theme tokens to our custom Steel Blue + SOS Red palette */
+  --teal-primary: var(--brand-blue);
+  --teal-hover: var(--brand-blue-dark);
+  --teal-subtle: var(--brand-blue-subtle);
+  --teal-border: var(--brand-blue-border);
 
-  --coral-emergency: #E11D48;  /* Warm Coral Crimson (SOS / Immediate Triage) */
-  --coral-hover: #BE123C;
-  --coral-subtle: rgba(225, 29, 72, 0.1);
-  --coral-glow: rgba(225, 29, 72, 0.35);
+  --coral-emergency: var(--sos-red);
+  --coral-hover: var(--sos-red-dark);
+  --coral-subtle: var(--sos-red-subtle);
+  --coral-glow: var(--sos-red-glow);
 
   --text-main: #0F172A;        /* Deep Slate (Optimal High-Readability Contrast) */
   --text-secondary: #475569;   /* Slate Gray */
@@ -24,12 +38,12 @@
   --border-subtle: #E2E8F0;    /* Soft Slate Border */
   --border-focus: #CBD5E1;
 
-  --status-success: #059669;
-  --status-success-bg: rgba(5, 150, 105, 0.1);
+  --status-success: var(--brand-blue);
+  --status-success-bg: var(--brand-blue-subtle);
   --status-warning: #D97706;
   --status-warning-bg: rgba(217, 119, 6, 0.1);
-  --status-error: #E11D48;
-  --status-info: #0284C7;
+  --status-error: var(--sos-red);
+  --status-info: var(--brand-blue);
 
   --radius-xs: 6px;
   --radius-sm: 10px;

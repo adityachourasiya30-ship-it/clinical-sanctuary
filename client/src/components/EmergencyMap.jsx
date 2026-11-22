@@ -68,10 +68,10 @@ const responderIcon = L.divIcon({
   className: 'custom-responder-marker',
   html: `
     <div style="position: relative; width: 38px; height: 38px;">
-      <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: #19b6a4; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 18px rgba(25,182,164,0.9); font-size: 20px;">
+      <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: #3D789E; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 18px rgba(61,120,158,0.9); font-size: 20px;">
         🚑
       </div>
-      <div style="position: absolute; width: 56px; height: 56px; top: -9px; left: -9px; border-radius: 50%; background: rgba(25,182,164,0.3); animation: pulse 1.6s infinite; pointer-events: none;"></div>
+      <div style="position: absolute; width: 56px; height: 56px; top: -9px; left: -9px; border-radius: 50%; background: rgba(61,120,158,0.3); animation: pulse 1.6s infinite; pointer-events: none;"></div>
     </div>
   `,
   iconSize: [38, 38],
@@ -313,7 +313,7 @@ export const EmergencyMap = ({
             <Polyline
               positions={routePolyline}
               pathOptions={{
-                color: '#19B6A4',
+                color: '#3D789E',
                 weight: 7,
                 opacity: 0.35,
                 lineCap: 'round',
@@ -324,7 +324,7 @@ export const EmergencyMap = ({
             <Polyline
               positions={routePolyline}
               pathOptions={{
-                color: routeTelemetry.isFallback ? '#f59e0b' : '#19B6A4',
+                color: routeTelemetry.isFallback ? '#f59e0b' : '#3D789E',
                 weight: 3.5,
                 opacity: 0.95,
                 dashArray: routeTelemetry.isFallback ? '8, 8' : undefined,
@@ -367,12 +367,12 @@ export const EmergencyMap = ({
           <Marker position={animatedPos} icon={responderIcon}>
             <Popup>
               <div style={{ padding: '6px' }}>
-                <strong style={{ display: 'block', color: '#19B6A4', marginBottom: '2px' }}>
+                <strong style={{ display: 'block', color: '#3D789E', marginBottom: '2px' }}>
                   🚑 {responderInfo.vehicle || 'ALS Ambulance'}
                 </strong>
                 <div style={{ fontSize: '11px', color: '#f8fafc', fontWeight: '600' }}>
                   {responderInfo.name} &bull;{' '}
-                  <span style={{ color: isTier1 ? '#60A5FA' : '#19B6A4' }}>
+                  <span style={{ color: isTier1 ? '#60A5FA' : '#3D789E' }}>
                     {isTier1 ? 'Tier 1 Transport' : 'Tier 2 Medical'}
                   </span>
                 </div>
@@ -487,8 +487,8 @@ export const EmergencyMap = ({
           Patient
         </span>
         {initialResponderPos && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#19B6A4', fontWeight: '700' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#19B6A4' }} />
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3D789E', fontWeight: '700' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3D789E' }} />
             Ambulance
           </span>
         )}

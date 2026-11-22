@@ -77,11 +77,11 @@ export const UberResponseCard = ({
         backgroundColor: isFloating ? 'rgba(255, 255, 255, 0.95)' : 'var(--surface-primary, #FFFFFF)',
         backdropFilter: isFloating ? 'blur(16px)' : undefined,
         WebkitBackdropFilter: isFloating ? 'blur(16px)' : undefined,
-        border: isFloating ? '1.5px solid rgba(226, 232, 240, 0.9)' : '2px solid var(--teal-primary)',
+        border: isFloating ? '1px solid rgba(61, 120, 158, 0.2)' : '2px solid var(--brand-blue, #3D789E)',
         borderRadius: isFloating ? '24px' : 'var(--radius-md, 16px)',
         boxShadow: isFloating
-          ? '0 12px 40px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04)'
-          : '0 8px 30px rgba(25, 182, 164, 0.18)',
+          ? '0 12px 40px rgba(61, 120, 158, 0.14)'
+          : '0 8px 30px rgba(61, 120, 158, 0.16)',
         padding: isFloating ? '1.25rem 1.4rem' : '1.25rem',
         position: 'relative',
         overflow: 'hidden',
@@ -109,10 +109,10 @@ export const UberResponseCard = ({
               height: '12px',
               borderRadius: '50%',
               backgroundColor: isArrived
-                ? 'var(--status-success, #059669)'
+                ? '#3D789E'
                 : isEnRoute
-                ? 'var(--coral-emergency, #E11D48)'
-                : 'var(--teal-primary, #059669)',
+                ? 'var(--sos-red, #E11D48)'
+                : 'var(--brand-blue, #3D789E)',
               animation: 'emergency-pulse 1.3s infinite',
             }}
           />
@@ -121,7 +121,7 @@ export const UberResponseCard = ({
               style={{
                 fontSize: '0.7rem',
                 fontWeight: '800',
-                color: 'var(--text-secondary, #475569)',
+                color: 'var(--brand-blue-dark, #2B5876)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
               }}
@@ -146,21 +146,22 @@ export const UberResponseCard = ({
 
         {/* Status Badges: Pickup OTP & Live ETA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Pickup OTP Box with JetBrains Mono font */}
+          {/* Pickup OTP Box in #EDF4F8 with bold #2B5876 monospace text */}
           {incident.pickupOtp && (
             <div
               style={{
-                backgroundColor: 'rgba(5, 150, 105, 0.12)',
-                border: '1.5px solid var(--teal-primary, #059669)',
+                backgroundColor: '#EDF4F8',
+                border: '1.5px solid rgba(61, 120, 158, 0.35)',
                 borderRadius: '12px',
-                padding: '0.35rem 0.8rem',
+                padding: '0.35rem 0.85rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
+                boxShadow: '0 2px 8px rgba(61, 120, 158, 0.08)',
               }}
               title="Share this 4-digit code with the Paramedic upon arrival to verify response"
             >
-              <ShieldCheck size={16} color="var(--teal-primary, #059669)" />
+              <ShieldCheck size={16} color="#3D789E" />
               <div>
                 <div
                   style={{
@@ -175,10 +176,10 @@ export const UberResponseCard = ({
                 </div>
                 <div
                   style={{
-                    fontSize: '1rem',
+                    fontSize: '1.05rem',
                     fontWeight: '900',
-                    color: '#059669',
-                    letterSpacing: '0.12em',
+                    color: '#2B5876',
+                    letterSpacing: '0.14em',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                     lineHeight: 1.1,
                   }}
@@ -193,8 +194,8 @@ export const UberResponseCard = ({
           {(isEnRoute || isAssigned) && (
             <div
               style={{
-                backgroundColor: '#F8FAFC',
-                border: '1.5px solid var(--teal-primary, #059669)',
+                backgroundColor: '#EDF4F8',
+                border: '1.5px solid rgba(61, 120, 158, 0.35)',
                 borderRadius: '12px',
                 padding: '0.35rem 0.8rem',
                 display: 'flex',
@@ -202,10 +203,10 @@ export const UberResponseCard = ({
                 gap: '0.45rem',
               }}
             >
-              <Clock size={16} color="var(--teal-primary, #059669)" />
+              <Clock size={16} color="#3D789E" />
               <div>
                 <div style={{ fontSize: '0.62rem', color: '#64748B', fontWeight: '700' }}>Estimated Arrival</div>
-                <div style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--teal-primary, #059669)', lineHeight: 1.1 }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: '900', color: '#2B5876', lineHeight: 1.1 }}>
                   {responder?.eta || '3 mins'} &bull; {responder?.distance || '850m away'}
                 </div>
               </div>
@@ -221,9 +222,9 @@ export const UberResponseCard = ({
                 padding: '0.35rem 0.75rem',
                 borderRadius: '999px',
                 backgroundColor:
-                  incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(5, 150, 105, 0.15)',
-                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#2563EB' : '#059669',
-                border: `1.5px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(5, 150, 105, 0.35)'}`,
+                  incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(43, 88, 118, 0.12)' : 'rgba(61, 120, 158, 0.14)',
+                color: incident.responderTier === 'TIER_1_TRANSPORT' ? '#2B5876' : '#3D789E',
+                border: `1.5px solid ${incident.responderTier === 'TIER_1_TRANSPORT' ? 'rgba(43, 88, 118, 0.35)' : 'rgba(61, 120, 158, 0.35)'}`,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',

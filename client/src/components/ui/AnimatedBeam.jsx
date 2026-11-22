@@ -3,7 +3,7 @@ import { MapPin, Radio, Ambulance, ShieldCheck, Zap } from 'lucide-react';
 
 /**
  * Magic UI - AnimatedBeam
- * Animated beam / SVG connection with continuous moving gradient.
+ * Animated beam / SVG connection with continuous moving gradient (#3D789E Steel Blue to #E11D48 Emergency Red).
  * Zero-dependency pure React + SVG implementation.
  */
 export const AnimatedBeam = ({
@@ -12,8 +12,8 @@ export const AnimatedBeam = ({
   endX = 100,
   endY = 20,
   curvature = 0,
-  gradientStartColor = '#059669',
-  gradientStopColor = '#E11D48',
+  gradientStartColor = '#3D789E', // Steel Blue
+  gradientStopColor = '#E11D48',  // Emergency Crimson Red
   pathColor = 'rgba(226, 232, 240, 0.8)',
   pathWidth = 2,
   duration = 2.4,
@@ -96,7 +96,7 @@ export const AnimatedBeam = ({
  * TelemetrySyncBeam
  * 3-Node Connected Telemetry sync display:
  * [Citizen GPS] ➔ [Live Dispatch] ➔ [Responder Unit]
- * Ideal for Uber-style floating bottom sheet and live dispatch tracking.
+ * Custom Steel Blue (#3D789E) and Emergency Crimson Red (#E11D48) live gradient.
  */
 export const TelemetrySyncBeam = ({
   status = 'EN_ROUTE',
@@ -118,8 +118,8 @@ export const TelemetrySyncBeam = ({
         width: '100%',
         padding: '0.85rem 1rem',
         borderRadius: '16px',
-        backgroundColor: 'rgba(248, 250, 252, 0.85)',
-        border: '1px solid rgba(226, 232, 240, 0.9)',
+        backgroundColor: 'rgba(237, 244, 248, 0.75)', // --brand-blue-soft
+        border: '1px solid rgba(61, 120, 158, 0.22)',
         overflow: 'hidden',
       }}
     >
@@ -135,17 +135,17 @@ export const TelemetrySyncBeam = ({
           zIndex: 1,
         }}
       >
-        {/* Animated glowing beam line */}
+        {/* Animated glowing telemetry beam (#3D789E to #E11D48) */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: isEnRoute
-              ? 'linear-gradient(90deg, #E11D48, #059669, #3B82F6)'
-              : 'linear-gradient(90deg, #059669, #10B981)',
+              ? 'linear-gradient(90deg, #E11D48, #3D789E, #2B5876)'
+              : 'linear-gradient(90deg, #3D789E, #2B5876, #3D789E)',
             backgroundSize: '200% 100%',
             animation: 'telemetry-gradient-slide 2s linear infinite',
-            opacity: isAssigned ? 1 : 0.4,
+            opacity: isAssigned ? 1 : 0.45,
           }}
         />
       </div>
@@ -169,7 +169,7 @@ export const TelemetrySyncBeam = ({
               borderRadius: '50%',
               backgroundColor: '#FFFFFF',
               border: '2px solid #E11D48',
-              boxShadow: '0 0 14px rgba(225, 29, 72, 0.25)',
+              boxShadow: '0 0 14px rgba(225, 29, 72, 0.28)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -208,12 +208,12 @@ export const TelemetrySyncBeam = ({
               height: '42px',
               borderRadius: '50%',
               backgroundColor: '#FFFFFF',
-              border: '2px solid #059669',
-              boxShadow: '0 0 14px rgba(5, 150, 105, 0.25)',
+              border: '2px solid #3D789E',
+              boxShadow: '0 0 14px rgba(61, 120, 158, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#059669',
+              color: '#3D789E',
               marginBottom: '0.4rem',
               position: 'relative',
             }}
@@ -227,7 +227,7 @@ export const TelemetrySyncBeam = ({
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: '#059669',
+                backgroundColor: '#3D789E',
                 border: '2px solid #FFFFFF',
               }}
             />
@@ -235,7 +235,7 @@ export const TelemetrySyncBeam = ({
           <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
             Live Dispatch
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#059669', fontWeight: '700' }}>
+          <span style={{ fontSize: '0.68rem', color: '#3D789E', fontWeight: '700' }}>
             OSRM Sync Active
           </span>
         </div>
@@ -247,15 +247,15 @@ export const TelemetrySyncBeam = ({
               width: '42px',
               height: '42px',
               borderRadius: '50%',
-              backgroundColor: isArrived ? '#059669' : '#FFFFFF',
-              border: `2px solid ${isArrived ? '#059669' : '#2563EB'}`,
+              backgroundColor: isArrived ? '#3D789E' : '#FFFFFF',
+              border: `2px solid ${isArrived ? '#3D789E' : '#2B5876'}`,
               boxShadow: isArrived
-                ? '0 0 14px rgba(5, 150, 105, 0.35)'
-                : '0 0 14px rgba(37, 99, 235, 0.25)',
+                ? '0 0 14px rgba(61, 120, 158, 0.35)'
+                : '0 0 14px rgba(43, 88, 118, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: isArrived ? '#FFFFFF' : '#2563EB',
+              color: isArrived ? '#FFFFFF' : '#3D789E',
               marginBottom: '0.4rem',
               position: 'relative',
             }}
@@ -269,7 +269,7 @@ export const TelemetrySyncBeam = ({
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: isArrived ? '#059669' : '#2563EB',
+                backgroundColor: isArrived ? '#3D789E' : '#2B5876',
                 border: '2px solid #FFFFFF',
               }}
             />
@@ -277,7 +277,7 @@ export const TelemetrySyncBeam = ({
           <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-main, #0F172A)' }}>
             {isArrived ? 'On Scene' : isEnRoute ? `En Route (${eta})` : 'Assigned Unit'}
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#2563EB', fontWeight: '700' }}>
+          <span style={{ fontSize: '0.68rem', color: '#3D789E', fontWeight: '700' }}>
             {responderTier === 'TIER_2_MEDICAL' ? 'Tier 2 Medical' : 'Tier 1 Transport'}
           </span>
         </div>

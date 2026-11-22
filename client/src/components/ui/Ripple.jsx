@@ -2,14 +2,15 @@ import React from 'react';
 
 /**
  * Magic UI - Ripple
- * Concentric outward-expanding circular radar rings.
+ * Concentric outward-expanding circular radar rings combining Emergency Red (#E11D48)
+ * and subtle Steel Blue (#3D789E).
  * Lightweight, zero-dependency pure React + CSS animation implementation.
  */
 export const Ripple = ({
   mainCircleSize = 200,
-  mainCircleOpacity = 0.24,
+  mainCircleOpacity = 0.26,
   numCircles = 6,
-  color = '225, 29, 72', // RGB string for dynamic opacity
+  color = null, // if omitted, alternates red (#E11D48) and steel-blue (#3D789E)
   active = false,
   className = '',
   style = {},
@@ -31,9 +32,12 @@ export const Ripple = ({
     >
       {Array.from({ length: numCircles }).map((_, i) => {
         const size = mainCircleSize + i * (active ? 70 : 55);
-        const opacity = Math.max(0.04, mainCircleOpacity - i * 0.035);
+        const opacity = Math.max(0.04, mainCircleOpacity - i * 0.032);
         const animationDelay = `${i * 0.3}s`;
         const duration = active ? '2.4s' : '3.6s';
+
+        // Alternating concentric red (#E11D48) and subtle steel-blue (#3D789E) radar rings
+        const ringRgb = color || (i % 2 === 0 ? '225, 29, 72' : '61, 120, 158');
 
         return (
           <div
@@ -45,8 +49,9 @@ export const Ripple = ({
               width: `${size}px`,
               height: `${size}px`,
               borderRadius: '50%',
-              border: `1.5px solid rgba(${color}, ${opacity * 1.5})`,
-              backgroundColor: `rgba(${color}, ${opacity * 0.35})`,
+              border: `1.5px solid rgba(${ringRgb}, ${opacity * 1.5})`,
+              backgroundColor: `rgba(${ringRgb}, ${opacity * 0.28})`,
+              boxShadow: `0 0 16px rgba(${ringRgb}, ${opacity * 0.35})`,
               transform: 'translate(-50%, -50%) scale(1)',
               animation: `magic-ripple-wave ${duration} infinite cubic-bezier(0.22, 1, 0.36, 1)`,
               animationDelay,
